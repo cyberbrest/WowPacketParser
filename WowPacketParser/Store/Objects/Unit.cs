@@ -17,9 +17,9 @@ namespace WowPacketParser.Store.Objects
             // If our unit got any of the following update fields set,
             // it's probably a temporary spawn
             UpdateField uf;
-            if (UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_FIELD_SUMMONEDBY), out uf) ||
-                UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_CREATED_BY_SPELL), out uf) ||
-                UpdateFields.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(UnitField.UNIT_FIELD_CREATEDBY), out uf))
+            if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_SUMMONEDBY), out uf) ||
+                UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_CREATED_BY_SPELL), out uf) ||
+                UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_CREATEDBY), out uf))
                 return uf.UInt32Value != 0;
 
             return false;
@@ -128,7 +128,7 @@ namespace WowPacketParser.Store.Objects
         public static TK GetValue<T, TK>(this Dictionary<int, UpdateField> dict, T updateField)
         {
             UpdateField uf;
-            if (dict.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(updateField), out uf))
+            if (dict.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(updateField), out uf))
             {
                 if (typeof(TK) == typeof(int?) || typeof(TK) == typeof(int) ||
                     typeof(TK) == typeof(uint?) || typeof(TK) == typeof(uint))
@@ -153,17 +153,19 @@ namespace WowPacketParser.Store.Objects
         public static TK[] GetArray<T, TK>(this Dictionary<int, UpdateField> dict, T firstUpdateField, int count)
         {
             var result = new TK[count];
-
+            
             for (var i = 0; i < count; i++)
             {
                 UpdateField uf;
-                if (dict.TryGetValue(Enums.Version.UpdateFields.GetUpdateField<T>(Convert.ToInt32(firstUpdateField) + i), out uf))
+                if (dict.TryGetValue(Convert.ToInt32(firstUpdateField) + i, out uf))
+                {
                     if (typeof(TK) == typeof(uint))
-                        result[i] = (TK) (object) uf.UInt32Value;
+                        result[i] = (TK)(object)uf.UInt32Value;
                     else if (typeof(TK) == typeof(float))
-                        result[i] = (TK)(object) uf.SingleValue;
+                        result[i] = (TK)(object)uf.SingleValue;
                     else
                         return null;
+                }
             }
 
             return result;
@@ -186,7 +188,7 @@ namespace WowPacketParser.Store.Objects
             try
             {
                 UpdateField uf;
-                if (dict.TryGetValue(Enums.Version.UpdateFields.GetUpdateField(updateField), out uf))
+                if (dict.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(updateField), out uf))
                     return (TK)Enum.Parse(typeof(TK).GetGenericArguments()[0], uf.UInt32Value.ToString(CultureInfo.InvariantCulture));
             }
             catch (OverflowException) // Data wrongly parsed can result in very wtfy values

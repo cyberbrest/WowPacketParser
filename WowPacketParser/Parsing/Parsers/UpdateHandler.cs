@@ -120,7 +120,7 @@ namespace WowPacketParser.Parsing.Parsers
             var mask = new BitArray(updateMask);
             var dict = new Dictionary<int, UpdateField>();
 
-            int objectEnd = UpdateFields.GetUpdateField(ObjectField.OBJECT_END);
+            int objectEnd = (int)UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_END);
 
             for (var i = 0; i < mask.Count; i++)
             {
@@ -139,7 +139,7 @@ namespace WowPacketParser.Parsing.Parsers
                     {
                         case ObjectType.Container:
                         {
-                            if (i < UpdateFields.GetUpdateField(ItemField.ITEM_END))
+                            if (i < UpdateFields.GetUpdateFieldOffset(ItemField.ITEM_END))
                                 goto case ObjectType.Item;
 
                             key = UpdateFields.GetUpdateFieldName<ContainerField>(i);
@@ -152,7 +152,7 @@ namespace WowPacketParser.Parsing.Parsers
                         }
                         case ObjectType.Player:
                         {
-                            if (i < UpdateFields.GetUpdateField(UnitField.UNIT_END))
+                            if (i < UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_END))
                                 goto case ObjectType.Unit;
 
                             key = UpdateFields.GetUpdateFieldName<PlayerField>(i);

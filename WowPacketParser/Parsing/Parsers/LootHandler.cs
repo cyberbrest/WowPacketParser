@@ -120,7 +120,7 @@ namespace WowPacketParser.Parsing.Parsers
                 WoWObject item;
                 UpdateField itemEntry;
                 if (Storage.Objects.TryGetValue(guid, out item))
-                    if (item.UpdateFields.TryGetValue(UpdateFields.GetUpdateField(ObjectField.OBJECT_FIELD_ENTRY), out itemEntry))
+                    if (item.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_ENTRY), out itemEntry))
                     {
                         Storage.Loots.TryAdd(new Tuple<uint, ObjectType>(itemEntry.UInt32Value, guid.GetObjectType()), loot);
                         return;
