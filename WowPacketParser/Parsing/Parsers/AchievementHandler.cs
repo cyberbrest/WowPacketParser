@@ -113,8 +113,8 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_COMPRESSED_ACHIEVEMENT_DATA)]
         public static void HandleCompressedAllAchievementData(Packet packet)
         {
-            using (var packet2 = packet.Inflate(packet.ReadInt32()))
-                HandleAllAchievementData422(packet2);
+            packet.Inflate(packet.ReadInt32());
+            HandleAllAchievementData422(packet);
         }
 
         [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_2_2_14545)]

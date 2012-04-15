@@ -61,7 +61,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.WriteLine("Proof SHA-1 Hash: " + Utilities.ByteArrayToHexString(packet.ReadBytes(20)));
 
-            AddonHandler.ReadClientAddonsList(ref packet);
+            AddonHandler.ReadClientAddonsList(packet);
         }
 
         //[Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.V4_2_0_14333)]
@@ -107,7 +107,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadCString("Account name");
             packet.ReadInt32("Int32");
 
-            AddonHandler.ReadClientAddonsList(ref packet);
+            AddonHandler.ReadClientAddonsList(packet);
         }
 
         [Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.V4_3_0_15005)]
@@ -138,11 +138,7 @@ namespace WowPacketParser.Parsing.Parsers
             for (var i = 0; i < 2; i++)
                 packet.ReadByte("Digest (6)", i);
 
-            using (var pkt = new Packet(packet.ReadBytes(packet.ReadInt32()), packet.Opcode, packet.Time, packet.Direction, packet.Number, packet.Writer, packet.FileName))
-            {
-                var pkt2 = pkt;
-                AddonHandler.ReadClientAddonsList(ref pkt2);
-            }
+            AddonHandler.ReadClientAddonsList(packet, packet.ReadInt32());
             packet.ReadByte("Mask"); // TODO: Seems to affect how the size is read
             var size = (packet.ReadByte() >> 4);
             packet.WriteLine("Size: " + size);
@@ -188,12 +184,7 @@ namespace WowPacketParser.Parsing.Parsers
             sha[1] = packet.ReadByte();
             sha[13] = packet.ReadByte();
 
-            using (var pkt = new Packet(packet.ReadBytes(packet.ReadInt32()), packet.Opcode, packet.Time, packet.Direction, packet.Number, packet.Writer, packet.FileName))
-            {
-                var pkt2 = pkt;
-                AddonHandler.ReadClientAddonsList(ref pkt2);
-            }
-
+            AddonHandler.ReadClientAddonsList(packet, packet.ReadInt32());
             var highBits = packet.ReadByte() << 5;
             var lowBits = packet.ReadByte() >> 3;
             var size = lowBits | highBits;

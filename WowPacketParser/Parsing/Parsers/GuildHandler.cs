@@ -103,10 +103,8 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_COMPRESSED_GUILD_ROSTER)]
         public static void HandleCompressedGuildRoster(Packet packet)
         {
-            using (var packet2 = packet.Inflate(packet.ReadInt32()))
-            {
-                HandleGuildRoster422(packet2);
-            }
+            packet.Inflate(packet.ReadInt32());
+            HandleGuildRoster422(packet);
         }
 
         [Parser(Opcode.CMSG_GUILD_UPDATE_PARTY_STATE)]
