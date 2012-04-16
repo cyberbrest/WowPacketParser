@@ -57,8 +57,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleMultiplePackets(Packet packet)
         {
             // Testing: packet.WriteLine(packet.AsHex());
-            packet.WriteLine("{");
-            var i = 0;
+            packet.StoreOutputText("{");
             while (packet.CanRead())
             {
                 var opcode = 0;
@@ -81,16 +80,11 @@ namespace WowPacketParser.Parsing.Parsers
                 if (bytes == null || len == 0)
                     continue;
 
-                if (i > 0)
-                    packet.WriteLine();
-
-                packet.Write("[{0}] ", i++);
-
-                using (var newpacket = new Packet(bytes, opcode, packet.Time, packet.Direction, packet.Number, packet.Writer, packet.FileName))
+                using (var newpacket = new Packet(bytes, opcode, packet.Time, packet.Direction, packet.Number, packet.FileName, packet))
                     Handler.Parse(newpacket, isMultiple: true);
                 //newpacket.DisposePacket();
             }
-            packet.WriteLine("}");
+            packet.StoreOutputText("}");
         }
 
         [Parser(Opcode.SMSG_MULTIPLE_PACKETS_2)]
@@ -206,7 +200,8 @@ namespace WowPacketParser.Parsing.Parsers
             var data = packet.ReadInt32();
             var type = (ActionButtonType)((data & 0xFF000000) >> 24);
             var action = (data & 0x00FFFFFF);
-            packet.WriteLine("Type: " + type + " ID: " + action);
+            packet.Store("Type", type);
+            packet.Store("actionID", action);
         }
 
         [Parser(Opcode.SMSG_RESURRECT_REQUEST)]
@@ -345,10 +340,10 @@ namespace WowPacketParser.Parsing.Parsers
 
             // TODO: Exclude happiness on Cata
             for (var i = 0; i < powerCount; i++)
-                packet.WriteLine("Power " + (PowerType)i + ": " + packet.ReadInt32());
+                packet.ReadInt32("Power " + (PowerType)i);
 
             for (var i = 0; i < 5; i++)
-                packet.WriteLine("Stat " + (StatType)i + ": " + packet.ReadInt32());
+                packet.ReadInt32("Stat " + (StatType)i);
 
             if (SessionHandler.LoggedInCharacter != null)
                 SessionHandler.LoggedInCharacter.Level = level;
@@ -357,8 +352,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_TUTORIAL_FLAG)]
         public static void HandleTutorialFlag(Packet packet)
         {
-            var flag = packet.ReadInt32();
-            packet.WriteLine("Flag: 0x" + flag.ToString("X8"));
+            packet.ReadEnum<UnknownFlags>("Flag", TypeCode.Int32);
         }
 
         [Parser(Opcode.SMSG_TUTORIAL_FLAGS)]
@@ -366,8 +360,7 @@ namespace WowPacketParser.Parsing.Parsers
         {
             for (var i = 0; i < 8; i++)
             {
-                var flag = packet.ReadInt32();
-                packet.WriteLine("Flags " + i + ": 0x" + flag.ToString("X8"));
+                packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32, i);
             }
         }
 
@@ -617,7 +610,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_LOAD_SCREEN)] // Also named CMSG_LOADING_SCREEN_NOTIFY
         public static void HandleClientEnterWorld(Packet packet)
         {
-            packet.WriteLine("Loading: " + (packet.ReadBit() ? "true" : "false")); // Not sure on the meaning
+            packet.ReadBit("Loading"); // Not sure on the meaning
             var mapId = packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map");
             MovementHandler.CurrentMapId = (uint) mapId;
 

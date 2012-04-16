@@ -67,11 +67,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                     if (usePublicKey)
                     {
-                        var pubKey = packet.ReadChars(256);
-                        packet.Write("[{0}] Public Key: ", i);
-
-                        foreach (var t in pubKey)
-                            packet.Write(t);
+                        packet.ReadChars("Public Key", 256, i);
                     }
 
                     packet.ReadInt32("Unk Int32", i);
@@ -90,10 +86,10 @@ namespace WowPacketParser.Parsing.Parsers
                     packet.ReadInt32("ID", i);
 
                     var unkStr2 = packet.ReadBytes(16);
-                    packet.WriteLine("[{0}] Unk Hash 1: {1}", i, Utilities.ByteArrayToHexString(unkStr2));
+                    packet.Store("Unk Hash 1", Utilities.ByteArrayToHexString(unkStr2), i);
 
                     var unkStr3 = packet.ReadBytes(16);
-                    packet.WriteLine("[{0}] Unk Hash 2: {1}", i, Utilities.ByteArrayToHexString(unkStr3));
+                    packet.Store("Unk Hash 2", Utilities.ByteArrayToHexString(unkStr3), i);
 
                     packet.ReadInt32("Unk Int32 3", i);
 

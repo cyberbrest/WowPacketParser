@@ -283,10 +283,8 @@ namespace WowPacketParser.Parsing.Parsers
                 if (bits[c, 4])
                     guild[1] = (byte)(packet.ReadByte() ^ 1);
 
-                var playerGuid = new Guid(BitConverter.ToUInt64(low, 0));
-
-                packet.WriteLine("[{0}] Character GUID: {1}", c, playerGuid);
-                packet.WriteLine("[{0}] Guild GUID: {1}", c, new Guid(BitConverter.ToUInt64(guild, 0)));
+                var playerGuid = packet.StoreBitstreamGuid("Character GUID", low, c);
+                packet.StoreBitstreamGuid("Guild GUID", guild, c);
 
                 var firstLogin = bits[c, 16];
                 if (firstLogin)
@@ -418,10 +416,8 @@ namespace WowPacketParser.Parsing.Parsers
                 if (guildGuids[c][2] != 0)
                     guildGuids[c][2] ^= packet.ReadByte();
 
-                var playerGuid = new Guid(BitConverter.ToUInt64(charGuids[c], 0));
-
-                packet.WriteLine("[{0}] Character GUID: {1}", c, playerGuid);
-                packet.WriteLine("[{0}] Guild GUID: {1}", c, new Guid(BitConverter.ToUInt64(guildGuids[c], 0)));
+                var playerGuid = packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
+                packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 if (firstLogins[c])
                 {
@@ -438,7 +434,10 @@ namespace WowPacketParser.Parsing.Parsers
             }
 
             for (var c = 0; c < unkCounter; c++)
-                packet.WriteLine("Unk Loop: {0}, {1}", packet.ReadUInt32(), packet.ReadByte());
+            {
+                packet.ReadUInt32("Unk UInt32");
+                packet.ReadByte("Unk Byte");
+            }
         }
 
         [Parser(Opcode.SMSG_COMPRESSED_CHAR_ENUM)]

@@ -9,8 +9,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_INITIALIZE_FACTIONS)]
         public static void HandleInitializeFactions(Packet packet)
         {
-            var flags = packet.ReadInt32();
-            packet.WriteLine("Flags: 0x" + flags.ToString("X8"));
+            packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32);
 
             for (var i = 0; i < 128; i++)
             {

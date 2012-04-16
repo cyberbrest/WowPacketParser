@@ -79,7 +79,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.ReadUInt32("Unk 8");
 
-            packet.WriteLine("Guid: {0}", new Guid(BitConverter.ToUInt64(guid, 0)));
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.SMSG_TRADE_STATUS, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -227,8 +227,8 @@ namespace WowPacketParser.Parsing.Parsers
                 if (guids1[i][3] != 0)
                     guids1[i][3] ^= packet.ReadByte();
 
-                packet.WriteLine("Item Creator Guid: {0}", new Guid(BitConverter.ToUInt64(guids1[i], 0)));
-                packet.WriteLine("Item Gift Creator Guid: {0}", new Guid(BitConverter.ToUInt64(guids2[i], 0)));
+                packet.StoreBitstreamGuid("Item Creator Guid", guids1[i]);
+                packet.StoreBitstreamGuid("Item Gift Creator Guid", guids2[i]);
             }
 
 
@@ -311,7 +311,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (guid[7] != 0)
                 guid[7] ^= packet.ReadByte();
 
-            packet.WriteLine("Guid: {0}", new Guid(BitConverter.ToUInt64(guid, 0)));
+            packet.StoreBitstreamGuid("Guid", guid);
         }
 
         [Parser(Opcode.CMSG_IGNORE_TRADE)]

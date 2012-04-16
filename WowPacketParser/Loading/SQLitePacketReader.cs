@@ -74,7 +74,7 @@ namespace WowPacketParser.Loading
 
             var data = (byte[])blob;
 
-            using (var packet = new Packet(data, opcode, time, direction, number, fileName))
+            using (var packet = new Packet(data, opcode, time, direction, number, fileName, null))
                 return packet;
         }
 

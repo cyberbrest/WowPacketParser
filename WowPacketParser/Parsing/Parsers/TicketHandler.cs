@@ -11,8 +11,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleGMTicketCreate(Packet packet)
         {
             packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID");
-            var vector = packet.ReadVector3();
-            packet.WriteLine("Position: {0}", vector);
+            packet.ReadVector3("Position");
             packet.ReadCString("Text");
             packet.ReadUInt32("Unk UInt32 1");
             packet.ReadBoolean("Need Response");

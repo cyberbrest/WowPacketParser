@@ -114,7 +114,7 @@ namespace WowPacketParser.Parsing.Parsers
             var remainingLength = packet.Length - packet.Position;
             var bytes = packet.ReadBytes((int)remainingLength);
 
-            using (var newpacket = new Packet(bytes, opcode, packet.Time, packet.Direction, packet.Number, packet.Writer, packet.FileName))
+            using (var newpacket = new Packet(bytes, opcode, packet.Time, packet.Direction, packet.Number, packet.FileName, packet))
                 Handler.Parse(newpacket, isMultiple: true);
         }
 
@@ -647,8 +647,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadUInt32("Max Durability");
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Area, "Area");
                 // In this single (?) case, map 0 means no map
-                var map = packet.ReadUInt32();
-                packet.WriteLine("Map ID: " + (map != 0 ? StoreGetters.GetName(StoreNameType.Map, (int) map) : map + " (No map)"));
+                packet.ReadEntryWithName<UInt32>(StoreNameType.Map, "Map");
                 packet.ReadEnum<BagFamilyMask>("Bag Family", TypeCode.Int32);
                 packet.ReadEnum<TotemCategory>("Totem Category", TypeCode.Int32);
 

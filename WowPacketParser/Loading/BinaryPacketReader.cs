@@ -155,7 +155,7 @@ namespace WowPacketParser.Loading
                 }
             }
 
-            var packet = new Packet(data, opcode, time, direction, number, fileName);
+            var packet = new Packet(data, opcode, time, direction, number, fileName, null);
             return packet;
         }
 

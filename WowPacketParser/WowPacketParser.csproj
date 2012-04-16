@@ -313,7 +313,10 @@
     <Compile Include="Loading\SQLitePacketReader.cs" />
     <Compile Include="Loading\WlpReader.cs" />
     <Compile Include="Loading\ZorReader.cs" />
+    <Compile Include="Misc\Bit.cs" />
     <Compile Include="Misc\Filters.cs" />
+    <Compile Include="Misc\PacketData.cs" />
+    <Compile Include="Misc\StoreEntry.cs" />
     <Compile Include="Parsing\Parsers\CombatLogHandler.cs" />
     <Compile Include="Parsing\Parsers\TestHandler.cs" />
     <Compile Include="SQL\Builders\Miscellaneous.cs" />
@@ -453,7 +456,10 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Parsing\SharpParser\Parsers\" />
+    <Folder Include="Parsing\WCellParser\Parsers\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

@@ -18,7 +18,7 @@ namespace WowPacketParser.Parsing.Parsers
             {
                 packet.ReadInt32("Unk2", i);
                 var opcode = Opcodes.GetOpcode(packet.ReadInt32());
-                packet.WriteLine("Opcode: " + opcode);
+                packet.Store("Opcode", opcode);
                 switch (opcode)
                 {
                     case Opcode.SMSG_SPELLHEALLOG:

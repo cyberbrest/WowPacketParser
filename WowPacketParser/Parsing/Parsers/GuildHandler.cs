@@ -51,7 +51,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (bits[2]) bytes[2] = (byte)(packet.ReadByte() ^ 1);
             if (bits[1]) bytes[6] = (byte)(packet.ReadByte() ^ 1);
             if (bits[6]) bytes[3] = (byte)(packet.ReadByte() ^ 1);
-            packet.WriteLine("GUID: {0}", new Guid(BitConverter.ToUInt64(bytes, 0)));
+            packet.StoreBitstreamGuid("GUID", bytes);
         }
 
         [Parser(Opcode.SMSG_GUILD_ROSTER)]
@@ -506,7 +506,7 @@ namespace WowPacketParser.Parsing.Parsers
                 for (var i = 0; i < size; i++)
                 {
                     var type = packet.ReadEnum<GuildBankEventLogType>("Bank Log Event Type", TypeCode.Byte, i);
-                    packet.ReadGuid("[" + i + "] GUID", i);
+                    packet.ReadGuid("GUID", i);
                     if (type == GuildBankEventLogType.BuySlot)
                         packet.ReadUInt32("Cost", i);
                     else
@@ -775,7 +775,7 @@ namespace WowPacketParser.Parsing.Parsers
                 if (guids[i][1] != 0) // 9
                     guids[i][1] ^= packet.ReadByte();
 
-                packet.WriteLine("[{0}] Guild Guid: {1}", i, new Guid(BitConverter.ToUInt64(guids[i], 0)));
+                packet.StoreBitstreamGuid("Guild Guid", guids[i], i);
             }
         }
 

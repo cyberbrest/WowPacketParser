@@ -48,13 +48,8 @@ namespace WowPacketParser.Parsing.Parsers
             var decompCount = packet.ReadInt32();
             packet.Inflate(decompCount);
 
-            var data = packet.ReadBytes(decompCount);
-            packet.WriteLine("Account Data: ");
-
-            foreach (var b in data)
-                packet.Write((char)b);
-
-            packet.WriteLine();
+            packet.ReadChars("Account Data", decompCount);
+            packet.StoreOutputText("");
         }
 
         [Parser(Opcode.CMSG_UPDATE_ACCOUNT_DATA)]

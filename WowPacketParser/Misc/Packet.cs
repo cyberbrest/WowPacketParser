@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Text;
+using System.Collections.Generic;
 using ICSharpCode.SharpZipLib.Zip.Compression;
 using WowPacketParser.Enums;
 using WowPacketParser.Store;
@@ -14,24 +15,11 @@ namespace WowPacketParser.Misc
         private static readonly bool SniffData = Settings.SQLOutput.HasAnyFlag(SQLOutputFlags.SniffData);
         private static readonly bool SniffDataOpcodes = Settings.SQLOutput.HasAnyFlag(SQLOutputFlags.SniffDataOpcodes);
 
-        [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
-        public Packet(byte[] input, int opcode, DateTime time, Direction direction, int number, StringWriter writer, string fileName)
-            : base(new MemoryStream(input.Length), Encoding.UTF8)
-        {
-            this.BaseStream.Write(input, 0, input.Length);
-            SetPosition(0);
-            Opcode = opcode;
-            Time = time;
-            Direction = direction;
-            Number = number;
-            Writer = writer;
-            FileName = fileName;
-            Status = ParsedStatus.None;
-            WriteToFile = true;
-        }
+        private readonly Packet Parent;
+        public string ErrorMessage = "";
 
         [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
-        public Packet(byte[] input, int opcode, DateTime time, Direction direction, int number, string fileName)
+        public Packet(byte[] input, int opcode, DateTime time, Direction direction, int number, string fileName, Packet parent, string error = "")
             : base(new MemoryStream(input.Length), Encoding.UTF8)
         {
             this.BaseStream.Write(input, 0, input.Length);
@@ -40,10 +28,17 @@ namespace WowPacketParser.Misc
             Time = time;
             Direction = direction;
             Number = number;
-            Writer = null;
+            Writer = new StringWriter();
             FileName = fileName;
             Status = ParsedStatus.None;
             WriteToFile = true;
+            Parent = parent != null ? (parent.Parent != null ? parent.Parent : parent) : null;
+            if (Parent != null)
+            {
+                if (Parent.SubPackets == null)
+                    Parent.SubPackets = new LinkedList<Packet>();
+                Parent.SubPackets.AddFirst(this);
+            }
         }
 
         public int Opcode { get; private set; }
@@ -54,6 +49,8 @@ namespace WowPacketParser.Misc
         public string FileName { get; private set; }
         public ParsedStatus Status { get; set; }
         public bool WriteToFile { get; private set; }
+        public LinkedList<PacketData> Data;
+        public LinkedList<Packet> SubPackets;
 
         public void AddSniffData(StoreNameType type, int id, string data)
         {
@@ -107,7 +104,7 @@ namespace WowPacketParser.Misc
             this.BaseStream.Write(tailData, 0, tailData.Length);
             SetPosition(oldPos);
         }
-
+            
         public void Inflate(int inflatedSize)
         {
             Inflate(inflatedSize, (int)(Length - Position));
@@ -142,51 +139,9 @@ namespace WowPacketParser.Misc
             return Position != Length;
         }
 
-        public void Write(object format, params object[] args)
-        {
-            if (Writer == null)
-                Writer = new StringWriter();
-
-            var str = string.Format(format.ToString(), args);
-            Writer.Write(str);
-        }
-
-        public void WriteLine()
-        {
-            if (Writer == null)
-                Writer = new StringWriter();
-
-            Writer.WriteLine();
-        }
-
-        public void WriteLine(string value)
-        {
-            if (Writer == null)
-                Writer = new StringWriter();
-
-            Writer.WriteLine(value);
-        }
-
-        public void WriteLine(object value)
-        {
-            if (Writer == null)
-                Writer = new StringWriter();
-
-            Writer.WriteLine(value);
-        }
-
-        public void WriteLine(string format, params object[] args)
-        {
-            if (Writer == null)
-                Writer = new StringWriter();
-
-            Writer.WriteLine(string.Format(format, args));
-        }
-
         public void ClosePacket()
         {
-            if (Writer != null)
-                Writer.Close();
+            Writer.Close();
 
 // ReSharper disable ConditionIsAlwaysTrueOrFalse (/slap R#)
             if (BaseStream != null)

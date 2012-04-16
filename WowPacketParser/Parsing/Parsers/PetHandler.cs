@@ -34,11 +34,11 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt16("Unknown 2"); // pets -> 0, vehicles -> 0x800 (2048)
 
             if (isPet)
-                packet.WriteLine("PET");
+                packet.StoreOutputText("PET");
             if (isMinion)
-                packet.WriteLine("MINION");
+                packet.StoreOutputText("MINION");
             if (isVehicle)
-                packet.WriteLine("VEHICLE");
+                packet.StoreOutputText("VEHICLE");
 
             var spells = new List<uint>(10);
             for (var i = 0; i < 10; i++) // Read pet/vehicle spell ids
@@ -46,18 +46,12 @@ namespace WowPacketParser.Parsing.Parsers
                 var spell16 = packet.ReadUInt16();
                 var spell8 = packet.ReadByte();
                 var spellId = spell16 + (spell8 << 16);
-                var slot = packet.ReadByte();
+                var slot = packet.ReadByte("Slot");
 
-                var s = new StringBuilder("[");
-                s.Append(i).Append("] ").Append(" Spell/Action: ");
                 if (spellId <= 4)
-                    s.Append(spellId);
+                    packet.Store("Action", spellId);
                 else
-                    s.Append(StoreGetters.GetName(StoreNameType.Spell, spellId));
-
-                s.Append(" slot: ").Append(slot);
-
-                packet.WriteLine(s.ToString());
+                    packet.Store("Spell", new StoreEntry(StoreNameType.Spell, spellId));
 
                 // Spells for pets are on DBCs; also no entry in guid
                 // We don't need the ac
@@ -158,7 +152,7 @@ namespace WowPacketParser.Parsing.Parsers
             {
                 packet.ReadUInt32("Position", i);
                 var action = (uint)packet.ReadUInt16() + (packet.ReadByte() << 16);
-                packet.WriteLine("[{0}] Action: {1}", i, action);
+                packet.Store("Action", action, i);
                 packet.ReadEnum<ActionButtonType>("Type", TypeCode.Byte, i++);
             }
         }
@@ -168,7 +162,7 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadGuid("GUID");
             var action = (uint)packet.ReadUInt16() + (packet.ReadByte() << 16);
-            packet.WriteLine("Action: {0}", action);
+            packet.Store("Action", action);
             packet.ReadEnum<ActionButtonType>("Type", TypeCode.Byte);
             packet.ReadGuid("GUID");
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6_13596))
