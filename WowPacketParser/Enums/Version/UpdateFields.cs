@@ -14,7 +14,7 @@ namespace WowPacketParser.Enums.Version
         private static readonly Dictionary<Type, Dictionary<string, int>> UpdateFieldDictionaries =
             new Dictionary<Type, Dictionary<string, int>>();
 
-        public static readonly Dictionary<Type, int> UpdateFieldMaxOffsets;
+        public static readonly Dictionary<Type, int> UpdateFieldMaxOffsets = new Dictionary<Type, int>();
 
         static UpdateFields()
         {
@@ -38,7 +38,7 @@ namespace WowPacketParser.Enums.Version
 
                 UpdateFieldDictionaries.Add(enumType, result);
             }
-
+            
             UpdateFieldMaxOffsets.Add(typeof(ObjectField), (int)GetUpdateFieldOffset(ObjectField.OBJECT_END));
             UpdateFieldMaxOffsets.Add(typeof(ItemField), (int)GetUpdateFieldOffset(ItemField.ITEM_END));
             UpdateFieldMaxOffsets.Add(typeof(ContainerField), (int)GetUpdateFieldOffset(ContainerField.CONTAINER_END));
@@ -47,6 +47,7 @@ namespace WowPacketParser.Enums.Version
             UpdateFieldMaxOffsets.Add(typeof(GameObjectField), (int)GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_END));
             UpdateFieldMaxOffsets.Add(typeof(DynamicObjectField), (int)GetUpdateFieldOffset(DynamicObjectField.DYNAMICOBJECT_END));
             UpdateFieldMaxOffsets.Add(typeof(CorpseField), (int)GetUpdateFieldOffset(CorpseField.CORPSE_END));
+             
         }
 
         // returns update field offset by generic - crossversion enum

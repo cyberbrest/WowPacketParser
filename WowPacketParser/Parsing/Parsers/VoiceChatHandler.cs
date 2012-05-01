@@ -1,4 +1,5 @@
 using System.Text;
+using System;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 
@@ -28,17 +29,19 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.ReadGuid("Leader GUID");
 
-            packet.ReadEnum<UnknownFlags>("Leader Flags 1", 1);
+            packet.ReadEnum<UnknownFlags>("Leader Flags 1", TypeCode.Byte);
 
-            packet.ReadEnum<UnknownFlags>("Leader Flags 2", 1);
+            packet.ReadEnum<UnknownFlags>("Leader Flags 2", TypeCode.Byte);
 
+            packet.StoreBeginList("Players");
             for (var i = 0; i < count - 1; i++)
             {
                 packet.ReadGuid("Player GUID");
                 packet.ReadByte("Index");
-                packet.ReadEnum<UnknownFlags>("Flags 1", 1);
-                packet.ReadEnum<UnknownFlags>("Flags 2", 1);
+                packet.ReadEnum<UnknownFlags>("Flags 1", TypeCode.Byte);
+                packet.ReadEnum<UnknownFlags>("Flags 2", TypeCode.Byte);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_VOICE_SESSION_LEAVE)]

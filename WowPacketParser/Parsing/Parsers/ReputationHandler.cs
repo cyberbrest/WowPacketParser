@@ -11,11 +11,13 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32);
 
+            packet.StoreBeginList("Factions");
             for (var i = 0; i < 128; i++)
             {
                 packet.ReadEnum<FactionFlag>("Faction Flags", TypeCode.Byte, i);
                 packet.ReadInt32("Faction Standing", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_SET_FACTION_VISIBLE)]
@@ -28,12 +30,14 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_SET_FORCED_REACTIONS)]
         public static void HandleForcedReactions(Packet packet)
         {
-            var counter = packet.ReadInt32("Factions");
+            var counter = packet.ReadInt32("Faction Count");
+            packet.StoreBeginList("Factions");
             for (var i = 0; i < counter; i++)
             {
-                packet.ReadUInt32("Faction Id");
-                packet.ReadUInt32("Reputation Rank");
+                packet.ReadUInt32("Faction Id", i);
+                packet.ReadUInt32("Reputation Rank", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_SET_FACTION_STANDING)]
@@ -46,11 +50,13 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadBoolean("Play Visual");
 
             var count = packet.ReadInt32("Count");
+            packet.StoreBeginList("Factions");
             for (var i = 0; i < count; i++)
             {
-                packet.ReadInt32("Faction List Id");
-                packet.ReadInt32("Standing");
+                packet.ReadInt32("Faction List Id", i);
+                packet.ReadInt32("Standing", i);
             }
+            packet.StoreEndList();
         }
     }
 }

@@ -101,9 +101,9 @@ namespace WowPacketParser
 
                     foreach (var packet in packets)
                     {
-                        if (!packet.WriteToFile)
-                            statsSkip++;
-                        else
+                        //if (!packet.WriteToFile)
+                        //    statsSkip++;
+                        //else
                         {
                             switch (packet.Status)
                             {

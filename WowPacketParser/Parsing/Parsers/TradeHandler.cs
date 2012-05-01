@@ -109,7 +109,6 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_TRADE_STATUS_EXTENDED, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleTradeStatusExtended422(Packet packet)
         {
-            packet.AsHex();
             packet.ReadInt32("Unk 1");
             packet.ReadInt32("Unk 2");
             packet.ReadInt32("Unk 3");
@@ -152,6 +151,7 @@ namespace WowPacketParser.Parsing.Parsers
                 guids1[i][4] = (byte)(packet.ReadBit() ? 1 : 0);
             }
 
+            packet.StoreBeginList("UnkList");
             for (var i = 0; i < count; ++i)
             {
                 packet.ReadInt32("Unk 1", i);
@@ -230,7 +230,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.StoreBitstreamGuid("Item Creator Guid", guids1[i]);
                 packet.StoreBitstreamGuid("Item Gift Creator Guid", guids2[i]);
             }
-
+            packet.StoreEndList();
 
         }
 
@@ -244,6 +244,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Gold");
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
 
+            packet.StoreBeginList("Slots");
             while (packet.CanRead())
             {
                 var slot = packet.ReadByte("Slot Index");
@@ -253,8 +254,10 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadUInt32("Item Wrapped", slot);
                 packet.ReadGuid("Item Gift Creator GUID", slot);
                 packet.ReadUInt32("Item Perm Enchantment Id", slot);
+                packet.StoreBeginList("Item Enchantments", slot);
                 for (var i = 0; i < 3; ++i)
                     packet.ReadUInt32("Item Enchantment Id", slot, i);
+                packet.StoreEndList();
                 packet.ReadGuid("Item Creator GUID", slot);
                 packet.ReadInt32("Item Spell Charges", slot);
                 packet.ReadInt32("Item Suffix Factor", slot);
@@ -263,6 +266,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadUInt32("Item Max Durability", slot);
                 packet.ReadUInt32("Item Durability", slot);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_ACCEPT_TRADE)]

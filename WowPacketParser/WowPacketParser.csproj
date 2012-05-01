@@ -315,7 +315,6 @@
     <Compile Include="Loading\ZorReader.cs" />
     <Compile Include="Misc\Bit.cs" />
     <Compile Include="Misc\Filters.cs" />
-    <Compile Include="Misc\PacketData.cs" />
     <Compile Include="Misc\StoreEntry.cs" />
     <Compile Include="Parsing\Parsers\CombatLogHandler.cs" />
     <Compile Include="Parsing\Parsers\TestHandler.cs" />

@@ -6,17 +6,22 @@ namespace WowPacketParser.Parsing.Parsers
 {
     public static class ContactHandler
     {
-        public static void ReadSingleContactBlock(ref Packet packet, bool onlineCheck)
+        public static void ReadSingleContactBlock(ref Packet packet, bool onlineCheck, params int[] values)
         {
+            packet.StoreBeginObj("ContactInfo", values);
             var status = packet.ReadEnum<ContactStatus>("Status", TypeCode.Byte);
 
             if (onlineCheck && status != ContactStatus.Online)
+            {
+                packet.StoreEndObj();
                 return;
+            }
 
             packet.ReadEntryWithName<Int32>(StoreNameType.Area, "Area");
             packet.ReadInt32("Level");
 
             packet.ReadEnum<Class>("Class", TypeCode.Int32);
+            packet.StoreEndObj();
         }
 
         [Parser(Opcode.CMSG_CONTACT_LIST)]
@@ -32,19 +37,21 @@ namespace WowPacketParser.Parsing.Parsers
 
             var count = packet.ReadInt32("Count");
 
+            packet.StoreBeginList("Contacts");
             for (var i = 0; i < count; i++)
             {
-                packet.ReadGuid("GUID");
+                packet.ReadGuid("GUID", i);
 
-                var cflags = packet.ReadEnum<ContactEntryFlag>("Flags", TypeCode.Int32);
+                var cflags = packet.ReadEnum<ContactEntryFlag>("Flags", TypeCode.Int32, i);
 
-                packet.ReadCString("Note");
+                packet.ReadCString("Note", i);
 
                 if (!cflags.HasAnyFlag(ContactEntryFlag.Friend))
                     continue;
 
-                ReadSingleContactBlock(ref packet, true);
+                ReadSingleContactBlock(ref packet, true, i);
             }
+            packet.StoreEndList();
 
             if (packet.CanRead())
                 WardenHandler.ReadCheatCheckDecryptionBlock(ref packet);

@@ -44,7 +44,7 @@ namespace WowPacketParser.Misc
         /// Shows our hex representation of a packet
         /// </summary>
         /// <param name="packet">A packet</param>
-        public static void AsHex(this Packet packet)
+        public static string ToHex(this Packet packet)
         {
             var n = Environment.NewLine;
             var hexDump = new StringBuilder();
@@ -94,7 +94,7 @@ namespace WowPacketParser.Misc
 
             hexDump.Append("|-------------------------------------------------|---------------------------------|");
 
-            packet.StoreOutputText(hexDump.ToString());
+            return hexDump.ToString();
         }
 
         /// <summary>

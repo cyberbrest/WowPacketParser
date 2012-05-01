@@ -12,21 +12,27 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Free Talent count");
             var speccount = packet.ReadByte("Spec count");
             packet.ReadByte("Active Spec");
+            packet.StoreBeginList("Specs");
             for (var i = 0; i < speccount; ++i)
             {
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
                     packet.ReadUInt32("TalentBranchSpec", i);
                 var count2 = packet.ReadByte("Spec Talent Count ", i);
+                packet.StoreBeginList("Talents", i);
                 for (var j = 0; j < count2; ++j)
                 {
                     packet.ReadUInt32("Talent Id", i, j);
                     packet.ReadByte("Rank", i, j);
                 }
+                packet.StoreEndList();
 
-                var glyphs = packet.ReadByte("Glyph count");
+                var glyphs = packet.ReadByte("Glyph count", i);
+                packet.StoreBeginList("Glyphs", i);
                 for (var j = 0; j < glyphs; ++j)
                     packet.ReadUInt16("Glyph", i, j);
+                packet.StoreEndList();
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_TALENTS_INVOLUNTARILY_RESET)]
@@ -47,6 +53,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             var slotMask = packet.ReadUInt32("Slot Mask");
             var slot = 0;
+            packet.StoreBeginList("Slots");
             while (slotMask > 0)
             {
                 if ((slotMask & 0x1) > 0)
@@ -57,6 +64,7 @@ namespace WowPacketParser.Parsing.Parsers
                     if (enchantMask > 0)
                     {
                         var enchCnt = 0;
+                        packet.StoreBeginList("Enchantments", slot);
                         while (enchantMask > 0)
                         {
                             if ((enchantMask & 0x1) > 0)
@@ -66,6 +74,7 @@ namespace WowPacketParser.Parsing.Parsers
                             enchantMask >>= 1;
                             ++enchCnt;
                         }
+                        packet.StoreEndList();
                     }
                     packet.ReadUInt16("Unk Uint16", slot);
                     packet.ReadPackedGuid("Creator GUID", slot);
@@ -74,6 +83,7 @@ namespace WowPacketParser.Parsing.Parsers
                 ++slot;
                 slotMask >>= 1;
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.MSG_TALENT_WIPE_CONFIRM)]
@@ -92,11 +102,13 @@ namespace WowPacketParser.Parsing.Parsers
             {
                 packet.ReadUInt32("Unspent Talent");
                 var count = packet.ReadByte("Talent Count");
+                packet.StoreBeginList("Talents");
                 for (var i = 0; i < count; ++i)
                 {
                     packet.ReadUInt32("Talent ID", i);
                     packet.ReadByte("Rank", i);
                 }
+                packet.StoreEndList();
             }
             else
                 ReadTalentInfo(ref packet);
@@ -110,11 +122,13 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadGuid("GUID");
 
             var count = packet.ReadUInt32("Talent Count");
+            packet.StoreBeginList("Talents");
             for (var i = 0; i < count; ++i)
             {
                 packet.ReadUInt32("Talent ID", i);
                 packet.ReadUInt32("Rank", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_LEARN_TALENT)]

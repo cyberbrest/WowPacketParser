@@ -19,12 +19,14 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleHotfixInfo(Packet packet)
         {
             var count = packet.ReadInt32("Count");
+            packet.StoreBeginList("Hotfixes");
             for (var i = 0; i < count; i++)
             {
                 packet.ReadInt32("Hotfix type"); // Also time?
                 packet.ReadTime("Hotfix date");
                 packet.ReadInt32("Hotfixed entry");
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.TEST_430_SYNC_PLAYER_MOVE)]
@@ -56,57 +58,44 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_MULTIPLE_PACKETS)]
         public static void HandleMultiplePackets(Packet packet)
         {
+            var i = 0;
             // Testing: packet.WriteLine(packet.AsHex());
-            packet.StoreOutputText("{");
+            packet.StoreBeginList("Packets");
             while (packet.CanRead())
             {
                 var opcode = 0;
                 var len = 0;
-                byte[] bytes = null;
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
                 {
                     opcode = packet.ReadUInt16();
                     // Why are there so many 0s in some packets? Should we have some check if opcode == 0 here?
                     len = packet.ReadUInt16();
-                    bytes = packet.ReadBytes(len);
                 }
                 else if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
                 {
-                    len = packet.ReadUInt16();
+                    len = packet.ReadUInt16() - 2;
                     opcode = packet.ReadUInt16();
-                    bytes = packet.ReadBytes(len - 2);
                 }
 
-                if (bytes == null || len == 0)
-                    continue;
-
-                using (var newpacket = new Packet(bytes, opcode, packet.Time, packet.Direction, packet.Number, packet.FileName, packet))
-                    Handler.Parse(newpacket, isMultiple: true);
-                //newpacket.DisposePacket();
+                packet.ReadSubPacket(opcode, len, "Packet", i);
+                ++i;
             }
-            packet.StoreOutputText("}");
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_MULTIPLE_PACKETS_2)]
         public static void HandleMultiplePackets2(Packet packet)
         {
             // This opcode heavily relies on ALL of its contained packets
-            // to be parsed successfully
-
-            //packet.WriteLine("{");
-            //var i = 0;
-            //while (packet.CanRead())
-            //{
-            //    packet.Opcode = packet.ReadUInt16();
-
-            //    if (i > 0)
-            //        packet.WriteLine();
-
-            //    packet.Write("[{0}] ", i++);
-
-            //    Handler.Parse(packet, isMultiple: true);
-            //}
-            //packet.WriteLine("}");
+            var i = 0;
+            packet.StoreBeginList("Packets");
+            while (packet.CanRead())
+            {
+                var opcode = packet.ReadUInt16();
+                packet.ReadSubPacket(opcode, "Packet", i);
+                ++i;
+            }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_STOP_DANCE)]
@@ -339,11 +328,14 @@ namespace WowPacketParser.Parsing.Parsers
                 powerCount = 5;
 
             // TODO: Exclude happiness on Cata
+            packet.StoreBeginList("Powers");
             for (var i = 0; i < powerCount; i++)
                 packet.ReadInt32("Power " + (PowerType)i);
 
+            packet.StoreBeginList("Stats");
             for (var i = 0; i < 5; i++)
                 packet.ReadInt32("Stat " + (StatType)i);
+            packet.StoreEndList();
 
             if (SessionHandler.LoggedInCharacter != null)
                 SessionHandler.LoggedInCharacter.Level = level;
@@ -358,10 +350,10 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_TUTORIAL_FLAGS)]
         public static void HandleTutorialFlags(Packet packet)
         {
+            packet.StoreBeginList("Flags");
             for (var i = 0; i < 8; i++)
-            {
                 packet.ReadEnum<UnknownFlags>("Flags", TypeCode.Int32, i);
-            }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_AREATRIGGER)]
@@ -452,11 +444,13 @@ namespace WowPacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
                 count = packet.ReadInt32("Count");
 
+            packet.StoreBeginList("Powers");
             for (var i = 0; i < count; i++)
             {
-                packet.ReadEnum<PowerType>("Power type", TypeCode.Byte); // Actually powertype for class
-                packet.ReadInt32("Value");
+                packet.ReadEnum<PowerType>("Power type", TypeCode.Byte, i); // Actually powertype for class
+                packet.ReadInt32("Value", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_SET_ACTIONBAR_TOGGLES)]
@@ -519,12 +513,15 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("ClassMask");
 
             var zones = packet.ReadUInt32("Zones count");
+            packet.StoreBeginList("Zones");
             for (var i = 0; i < zones; ++i)
                 packet.ReadUInt32("Zone Id", i);
 
             var patterns = packet.ReadUInt32("Pattern count");
+            packet.StoreBeginList("Patterns");
             for (var i = 0; i < patterns; ++i)
                 packet.ReadCString("Pattern", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_WHO)]
@@ -535,7 +532,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (counter == 0)
                 return;
-
+            packet.StoreBeginList("Players");
             for (var i = 0; i < counter; ++i)
             {
                 packet.ReadCString("Name");
@@ -546,6 +543,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadEnum<Gender>("Gender", TypeCode.Byte);
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id");
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_TIME_SYNC_RESP)]

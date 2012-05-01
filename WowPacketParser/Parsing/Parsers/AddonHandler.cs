@@ -24,6 +24,7 @@ namespace WowPacketParser.Parsing.Parsers
                 var count = packet.ReadInt32("Addons Count");
                 _addonCount = count;
 
+                packet.StoreBeginList("Addons");
                 for (var i = 0; i < count; i++)
                 {
                     packet.ReadCString("Name", i);
@@ -31,6 +32,7 @@ namespace WowPacketParser.Parsing.Parsers
                     packet.ReadInt32("CRC", i);
                     packet.ReadInt32("Unk Int32", i);
                 }
+                packet.StoreEndList();
 
                 packet.ReadTime("Time");
             }
@@ -38,7 +40,8 @@ namespace WowPacketParser.Parsing.Parsers
             {
                 int count = 0;
 
-                while (packet.Position != packet.Length)
+                packet.StoreBeginList("Addons");
+                while (packet.CanRead())
                 {
                     packet.ReadCString("Name");
                     packet.ReadBoolean("Enabled");
@@ -47,6 +50,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                     count++;
                 }
+                packet.StoreEndList();
 
                 _addonCount = count;
             }
@@ -55,6 +59,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_ADDON_INFO)]
         public static void HandleServerAddonsList(Packet packet)
         {
+            packet.StoreBeginList("Addons");
             for (var i = 0; i < _addonCount; i++)
             {
                 packet.ReadByte("Addon State", i);
@@ -76,11 +81,13 @@ namespace WowPacketParser.Parsing.Parsers
                 if (packet.ReadBoolean("Use URL File", i))
                     packet.ReadCString("Addon URL File", i);
             }
+            packet.StoreEndList();
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_0_8_9464))
             {
                 var bannedCount = packet.ReadInt32("Banned Addons Count");
 
+                packet.StoreBeginList("BannedAddons");
                 for (var i = 0; i < bannedCount; i++)
                 {
                     packet.ReadInt32("ID", i);
@@ -96,6 +103,7 @@ namespace WowPacketParser.Parsing.Parsers
                     if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_3a_11723))
                         packet.ReadInt32("Unk Int32 4", i);
                 }
+                packet.StoreEndList();
             }
         }
 
@@ -104,8 +112,11 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleAddonPrefixes(Packet packet)
         {
             var count = packet.ReadUInt32("Count");
+
+            packet.StoreBeginList("Addons");
             for (var i = 0; i < count; ++i)
                 packet.ReadCString("Addon", i);
+            packet.StoreEndList();
         }
     }
 }
