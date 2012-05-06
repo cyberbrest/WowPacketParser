@@ -368,20 +368,16 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.MSG_MOVE_TELEPORT_ACK)]
         public static void HandleTeleportAck(Packet packet)
         {
+            var guid = packet.ReadPackedGuid("Guid");
+
             if (packet.Direction == Direction.ServerToClient)
             {
-                var guid = packet.ReadPackedGuid("GUID");
-
-                var counter = packet.ReadInt32("Movement Counter");
-
+                packet.ReadInt32("Movement Counter");
                 ReadMovementInfo(ref packet, guid);
             }
             else
             {
-                packet.ReadPackedGuid("GUID");
-
                 packet.ReadEnum<MovementFlag>("Move Flags", TypeCode.Int32);
-
                 packet.ReadInt32("Time");
             }
         }
@@ -822,6 +818,14 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadSingle("Velocity");
         }
 
+        [Parser(Opcode.CMSG_MOVE_SPLINE_DONE)]
+        public static void HandleMoveSplineDone(Packet packet)
+        {
+            var guid = packet.ReadPackedGuid("Guid");
+            ReadMovementInfo(ref packet, guid);
+            packet.ReadInt32("Movement Counter"); // Possibly
+        }
+
         [Parser(Opcode.SMSG_SPLINE_SET_RUN_SPEED, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleSplineMovementSetRunSpeed422(Packet packet)
         {
@@ -858,6 +862,26 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadSingle("Speed");
         }
 
+        [Parser(Opcode.SMSG_FORCE_WALK_SPEED_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_RUN_SPEED_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_RUN_BACK_SPEED_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_SWIM_SPEED_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_SWIM_BACK_SPEED_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_TURN_RATE_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_FLIGHT_SPEED_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_FLIGHT_BACK_SPEED_CHANGE)]
+        [Parser(Opcode.SMSG_FORCE_PITCH_RATE_CHANGE)]
+        public static void HandleForceSpeedChange(Packet packet)
+        {
+            packet.ReadPackedGuid("Guid");
+            packet.ReadUInt32("MoveEvent"); // Movement Counter?
+
+            if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_FORCE_RUN_SPEED_CHANGE))
+                packet.ReadByte("Unk Byte");
+
+            packet.ReadSingle("New Speed");
+        }
+
         [Parser(Opcode.CMSG_FORCE_RUN_SPEED_CHANGE_ACK)]
         [Parser(Opcode.CMSG_FORCE_RUN_BACK_SPEED_CHANGE_ACK)]
         [Parser(Opcode.CMSG_FORCE_SWIM_SPEED_CHANGE_ACK)]
@@ -868,8 +892,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_FORCE_FLIGHT_BACK_SPEED_CHANGE_ACK)]
         public static void HandleSpeedChangeMessage(Packet packet)
         {
-            var guid = packet.ReadPackedGuid("GUID");
-
+            var guid = packet.ReadPackedGuid("Guid");
             packet.ReadInt32("Movement Counter");
 
             ReadMovementInfo(ref packet, guid);
@@ -882,12 +905,10 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_MOVE_SET_COLLISION_HGT_ACK)]
         public static void HandleCollisionMovements(Packet packet)
         {
-            var guid = packet.ReadPackedGuid("GUID");
+            var guid = packet.ReadPackedGuid("Guid");
 
             if (packet.Opcode != Opcodes.GetOpcode(Opcode.MSG_MOVE_SET_COLLISION_HGT))
-            {
-                var counter = packet.ReadInt32("Movement Counter");
-            }
+                packet.ReadInt32("Movement Counter");
 
             if (packet.Opcode != Opcodes.GetOpcode(Opcode.SMSG_MOVE_SET_COLLISION_HGT))
                 ReadMovementInfo(ref packet, guid);
@@ -902,39 +923,23 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadGuid("GUID");
         }
 
-        [Parser(Opcode.SMSG_SUMMON_REQUEST)]
-        public static void HandleSummonRequest(Packet packet)
-        {
-            packet.ReadGuid("Summoner GUID");
-            packet.ReadInt32("Unk int 1");
-            packet.ReadInt32("Unk int 2");
-        }
-
-        [Parser(Opcode.CMSG_SUMMON_RESPONSE)]
-        public static void HandleSummonResponse(Packet packet)
-        {
-            packet.ReadGuid("Summoner GUID");
-            packet.ReadBoolean("Accept");
-        }
-
         [Parser(Opcode.SMSG_FORCE_MOVE_ROOT)]
         [Parser(Opcode.SMSG_FORCE_MOVE_UNROOT)]
         [Parser(Opcode.SMSG_MOVE_WATER_WALK)]
         [Parser(Opcode.SMSG_MOVE_LAND_WALK)]
-        [Parser(Opcode.SMSG_MOVE_FEATHER_FALL)]
-        [Parser(Opcode.SMSG_MOVE_NORMAL_FALL)]
         [Parser(Opcode.SMSG_MOVE_SET_HOVER)]
         [Parser(Opcode.SMSG_MOVE_UNSET_HOVER)]
         [Parser(Opcode.SMSG_MOVE_SET_CAN_FLY)]
         [Parser(Opcode.SMSG_MOVE_UNSET_CAN_FLY)]
         [Parser(Opcode.SMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY)]
         [Parser(Opcode.SMSG_MOVE_UNSET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY)]
+        [Parser(Opcode.SMSG_MOVE_FEATHER_FALL)]
+        [Parser(Opcode.SMSG_MOVE_NORMAL_FALL)]
         [Parser(Opcode.SMSG_MOVE_GRAVITY_DISABLE)]
         [Parser(Opcode.SMSG_MOVE_GRAVITY_ENABLE)]
         public static void HandleSetMovementMessages(Packet packet)
         {
-            packet.ReadPackedGuid("GUID");
-
+            packet.ReadPackedGuid("Guid");
             packet.ReadInt32("Movement Counter");
         }
 
@@ -943,8 +948,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_MOVE_HOVER_ACK)]
         public static void HandleSpecialMoveAckMessages(Packet packet)
         {
-            var guid = packet.ReadPackedGuid("GUID");
-
+            var guid = packet.ReadPackedGuid("Guid");
             packet.ReadInt32("Unk Int32 1");
 
             ReadMovementInfo(ref packet, guid);

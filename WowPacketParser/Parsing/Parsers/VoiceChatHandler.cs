@@ -1,4 +1,3 @@
-using System.Text;
 using System;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
