@@ -315,6 +315,7 @@
     <Compile Include="Loading\SQLitePacketReader.cs" />
     <Compile Include="Loading\WlpReader.cs" />
     <Compile Include="Loading\ZorReader.cs" />
+    <Compile Include="Misc\BiDictionary.cs" />
     <Compile Include="Misc\Bit.cs" />
     <Compile Include="Misc\Filters.cs" />
     <Compile Include="Misc\StoreEntry.cs" />
@@ -458,7 +459,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Parsing\SharpParser\Parsers\" />
     <Folder Include="Parsing\WCellParser\Parsers\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -712,11 +712,12 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadGuid("Caster GUID");
             packet.ReadGuid("Target GUID");
-            packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Dispel Spell ID");
-
-            var i = 0;
-            while (packet.CanRead())
-                packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell ID", i++);
+            packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Dispelling Spell ID");
+            
+            packet.StoreBeginList("Dispelled spells");
+            for (var i = 0; packet.CanRead(); i++)
+                packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Dispelled Spell ID", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_TOTEM_CREATED)]

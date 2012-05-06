@@ -1,12 +1,27 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using WowPacketParser.Enums.Version.V3_3_5a_12340;
+using WowPacketParser.Enums.Version.V4_0_3_13329;
+using WowPacketParser.Enums.Version.V4_0_6_13596;
+using WowPacketParser.Enums.Version.V4_1_0_13914;
+using WowPacketParser.Enums.Version.V4_2_0_14480;
+using WowPacketParser.Enums.Version.V4_2_2_14545;
+using WowPacketParser.Enums.Version.V4_3_0_15005;
+using WowPacketParser.Enums.Version.V4_3_2_15211;
+using WowPacketParser.Enums.Version.V4_3_3_15354;
+using WowPacketParser.Enums.Version.V4_3_4_15595;
 using WowPacketParser.Misc;
 
 namespace WowPacketParser.Enums.Version
 {
-    public static partial class Opcodes
+    public static class Opcodes
     {
-        private static Dictionary<Opcode, int> GetOpcodeDictionary(ClientVersionBuild build)
+        private static BiDictionary<Opcode, int> Dict;
+
+        static Opcodes()
+        {
+            Dict = GetOpcodeDictionary(ClientVersion.Build);
+        }
+
+        private static BiDictionary<Opcode, int> GetOpcodeDictionary(ClientVersionBuild build)
         {
             switch (build)
             {
@@ -31,94 +46,68 @@ namespace WowPacketParser.Enums.Version
                 case ClientVersionBuild.V3_3_3a_11723:
                 case ClientVersionBuild.V3_3_5a_12340:
                 {
-                    return _V3_3_5_opcodes;
+                    return Opcodes_3_3_5.Opcodes();
                 }
                 case ClientVersionBuild.V4_0_3_13329:
                 {
-                    return _V4_0_3_opcodes;
+                    return Opcodes_4_0_3.Opcodes();
                 }
                 case ClientVersionBuild.V4_0_6_13596:
                 case ClientVersionBuild.V4_0_6a_13623:
                 {
-                    return _V4_0_6_opcodes;
+                    return Opcodes_4_0_6.Opcodes();
                 }
                 case ClientVersionBuild.V4_1_0_13914:
                 case ClientVersionBuild.V4_1_0a_14007:
                 {
-                    return _V4_1_0_opcodes;
+                    return Opcodes_4_1_0.Opcodes();
                 }
                 case ClientVersionBuild.V4_2_0_14333:
                 case ClientVersionBuild.V4_2_0a_14480:
                 {
-                    return _V4_2_0_opcodes;
+                    return Opcodes_4_2_0.Opcodes();
                 }
                 case ClientVersionBuild.V4_2_2_14545:
                 {
-                    return _V4_2_2_opcodes;
+                    return Opcodes_4_2_2.Opcodes();
                 }
                 case ClientVersionBuild.V4_3_0_15005:
                 case ClientVersionBuild.V4_3_0_15050:
                 {
-                    return _V4_3_0_opcodes;
+                    return Opcodes_4_3_0.Opcodes();
                 }
                 case ClientVersionBuild.V4_3_2_15211:
                 {
-                    return _V4_3_2_opcodes;
+                    return Opcodes_4_3_2.Opcodes();
                 }
                 case ClientVersionBuild.V4_3_3_15354:
                 {
-                    return _V4_3_3_opcodes;
+                    return Opcodes_4_3_3.Opcodes();
                 }
                 case ClientVersionBuild.V4_3_4_15595:
                 {
-                    return _V4_3_4_opcodes;
+                    return Opcodes_4_3_4.Opcodes();
+                }
+                default:
+                {
+                    return Opcodes_3_3_5.Opcodes();
                 }
             }
-            return _V3_3_5_opcodes; // Default case
         }
 
         public static Opcode GetOpcode(int opcodeId)
         {
-            return GetOpcode(opcodeId, ClientVersion.Build);
-        }
-
-        private static Opcode GetOpcode(int opcodeId, ClientVersionBuild build)
-        {
-            /* Remove this comment block if you need to find duplicated opcode
-             * values in the opcode dictionaries.
-             * This is not enabled by default because it is slow as sh*t.
-             *
-            var dict = GetOpcodeDictionary(build);
-            var newDict = new Dictionary<Opcode, int>();
-            foreach (var pair in dict)
-            {
-                if (newDict.ContainsKey(pair.Key) || newDict.ContainsValue(pair.Value))
-                    throw new Exception(string.Format("Opcode dictionary got duplicated key ({0}) or value ({1}).",
-                                                      pair.Key, pair.Value));
-                newDict.Add(pair.Key, pair.Value);
-            }*/
-
-            foreach (var pair in GetOpcodeDictionary(build).Where(pair => pair.Value == opcodeId))
-                return pair.Key;
-
-            return (Opcode)opcodeId;
+            return Dict.GetBySecond(opcodeId);
         }
 
         public static int GetOpcode(Opcode opcode)
         {
-            return GetOpcode(opcode, ClientVersion.Build);
-        }
-
-        private static int GetOpcode(Opcode opcode, ClientVersionBuild build)
-        {
-            int opcodeId;
-            GetOpcodeDictionary(build).TryGetValue(opcode, out opcodeId);
-            return opcodeId;
+            return Dict.GetByFirst(opcode);
         }
 
         public static string GetOpcodeName(int opcodeId)
         {
-            return GetOpcode(opcodeId, ClientVersion.Build).ToString();
+            return GetOpcode(opcodeId).ToString();
         }
     }
 }

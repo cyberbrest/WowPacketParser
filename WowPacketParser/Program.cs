@@ -76,10 +76,25 @@ namespace WowPacketParser
                     var outFileName = Path.ChangeExtension(file, null) + "_parsed";
                     var outLogFileName = outFileName + ".txt";
 
-                    if (Settings.ThreadsParse == 0) // Number of threads is automatically choosen by the Parallel library
-                        packets.AsParallel().SetCulture().ForAll(packet => Handler.Parse(packet));
-                    else
-                        packets.AsParallel().SetCulture().WithDegreeOfParallelism(Settings.ThreadsParse).ForAll(packet => Handler.Parse(packet));
+                    switch (Settings.ThreadsRead)
+                    {
+                        case 0: // Number of threads is automatically choosen by the Parallel library
+                        {
+                            packets.AsParallel().SetCulture().ForAll(packet => Handler.Parse(packet));
+                            break;
+                        }
+                        case 1: // No multithreading, lowest amount of memory use
+                        {
+                            foreach (var packet in packets)
+                                Handler.Parse(packet);
+                            break;
+                        }
+                        default: // User defined number of threads
+                        {
+                            packets.AsParallel().SetCulture().WithDegreeOfParallelism(Settings.ThreadsParse).ForAll(packet => Handler.Parse(packet));
+                            break;
+                        }
+                    }
 
                     if (Settings.DumpFormat != DumpFormatType.None)
                     {
@@ -219,13 +234,29 @@ namespace WowPacketParser
             var startTime = DateTime.Now;
             var count = 0;
 
-            if (Settings.ThreadsRead == 0) // Number of threads is automatically choosen by the Parallel library
-                files.AsParallel().SetCulture()
-                    .ForAll(file =>
+            switch (Settings.ThreadsRead)
+            {
+                case 0: // Number of threads is automatically choosen by the Parallel library
+                {
+                    files.AsParallel().SetCulture()
+                        .ForAll(file =>
                         ReadFile(file, "[" + (++count).ToString(CultureInfo.InvariantCulture) + "/" + files.Count + " " + file + "]"));
-            else
-                files.AsParallel().SetCulture().WithDegreeOfParallelism(Settings.ThreadsRead)
-                    .ForAll(file => ReadFile(file, "[" + (++count).ToString(CultureInfo.InvariantCulture) + "/" + files.Count + " " + file + "]"));
+                    break;
+                }
+                case 1: // No multithreading, lowest amount of memory use
+                {
+                    foreach (var file in files)
+                        ReadFile(file, "[" + (++count).ToString(CultureInfo.InvariantCulture) + "/" + files.Count + " " + file + "]");
+                    break;
+                }
+                default: // User defined number of threads
+                {
+                    files.AsParallel().SetCulture().WithDegreeOfParallelism(Settings.ThreadsRead)
+                        .ForAll(file =>
+                        ReadFile(file, "[" + (++count).ToString(CultureInfo.InvariantCulture) + "/" + files.Count + " " + file + "]"));
+                    break;
+                }
+            }
 
             if (Settings.StatsOutput.HasAnyFlag(StatsOutputFlags.Global))
             {
@@ -239,10 +270,12 @@ namespace WowPacketParser
             if (Settings.SQLOutput != 0)
             {
                 string sqlFileName;
-                if (String.IsNullOrWhiteSpace(Settings.SQLFileName))
-                    sqlFileName = files.Aggregate(string.Empty, (current, file) => current + Path.GetFileNameWithoutExtension(file)) + ".sql";
-                else
+                if (!String.IsNullOrWhiteSpace(Settings.SQLFileName))
                     sqlFileName = Settings.SQLFileName;
+                else if (files.Count == 1)
+                    sqlFileName = string.Format("{0}_{1}.sql", Utilities.FormattedDateTimeForFiles(), Path.GetFileName(files[0]));
+                else
+                    sqlFileName = string.Format("{0}_multi_files.sql", Utilities.FormattedDateTimeForFiles());
 
                 Builder.DumpSQL("Dumping global sql", sqlFileName, Settings.SQLOutput);
             }
