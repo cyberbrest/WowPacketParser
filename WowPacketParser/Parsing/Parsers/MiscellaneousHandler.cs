@@ -331,6 +331,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreBeginList("Powers");
             for (var i = 0; i < powerCount; i++)
                 packet.ReadInt32("Power " + (PowerType)i);
+            packet.StoreEndList();
 
             packet.StoreBeginList("Stats");
             for (var i = 0; i < 5; i++)
@@ -516,6 +517,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreBeginList("Zones");
             for (var i = 0; i < zones; ++i)
                 packet.ReadUInt32("Zone Id", i);
+            packet.StoreEndList();
 
             var patterns = packet.ReadUInt32("Pattern count");
             packet.StoreBeginList("Patterns");

@@ -20,5 +20,14 @@ namespace WowPacketParser.Store.Objects
         {
             return UpdateFields.GetArray<GameObjectField, float>(GameObjectField.GAMEOBJECT_PARENTROTATION, 4);
         }
+
+        public bool IsTransport()
+        {
+            UpdateField uf;
+            if (UpdateFields.TryGetValue((int)Enums.Version.UpdateFields.GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_BYTES_1), out uf))
+                return (GameObjectType)((uf.UInt32Value & 0x0000FF00) >> 8) == GameObjectType.MOTransport;
+
+            return false;
+        }
     }
 }
