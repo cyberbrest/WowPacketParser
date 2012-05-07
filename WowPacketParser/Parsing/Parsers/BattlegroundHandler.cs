@@ -74,18 +74,22 @@ namespace WowPacketParser.Parsing.Parsers
                 return;
 
             var count1 = packet.ReadInt32("Count1");
+            packet.StoreBeginList("Players1");
             for (var i = 0; i < count1; i++)
             {
                 packet.ReadGuid("Player GUID", i);
                 packet.ReadVector2("Position", i);
             }
+            packet.StoreEndList();
 
             var count2 = packet.ReadInt32("Count2");
+            packet.StoreBeginList("Players2");
             for (var i = 0; i < count2; i++)
             {
                 packet.ReadGuid("Player GUID", i);
                 packet.ReadVector2("Position", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_BATTLEFIELD_JOIN, ClientVersionBuild.V4_2_2_14545)]
@@ -173,8 +177,10 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.ReadInt32("Loser Honor Reward");
             packet.ReadInt32("Winner Honor Reward");
+            packet.StoreBeginList("Instances");
             for (var i = 0; i < count; i++)
                 packet.ReadUInt32("Instance ID", i);
+            packet.StoreEndList();
 
             if (guidBytes[7] != 0) guidBytes[7] ^= packet.ReadByte();
 
@@ -201,7 +207,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (guidBytes[3] != 0) guidBytes[3] ^= packet.ReadByte();
             if (guidBytes[6] != 0) guidBytes[6] ^= packet.ReadByte();
 
-            packet.WriteLine("Guid: {0}", new Guid(BitConverter.ToUInt64(guidBytes, 0)));
+            packet.StoreBitstreamGuid("Guid", guidBytes);
         }
 
         [Parser(Opcode.SMSG_BATTLEFIELD_LIST, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
@@ -249,10 +255,12 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("Loser Honor Reward");
 
             var count = packet.ReadUInt32("BG Instance count");
+            packet.StoreBeginList("Instances");
             for (var i = 0; i < count; i++)
                 packet.ReadUInt32("Instance ID", i);
+            packet.StoreEndList();
 
-            packet.WriteLine("Guid: {0}", new Guid(BitConverter.ToUInt64(guidBytes, 0)));
+            packet.StoreBitstreamGuid("Guid", guidBytes);
         }
 
         [Parser(Opcode.SMSG_BATTLEFIELD_LIST, ClientVersionBuild.V4_0_6a_13623, ClientVersionBuild.V4_2_2_14545)]
@@ -270,8 +278,10 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadEntryWithName<Int32>(StoreNameType.Battleground, "BGType");
 
             var count = packet.ReadUInt32("BG Instance count");
+            packet.StoreBeginList("Instances");
             for (var i = 0; i < count; i++)
                 packet.ReadUInt32("Instance ID", i);
+            packet.StoreEndList();
 
             packet.ReadInt32("Loser Honor Reward");
         }
@@ -302,8 +312,10 @@ namespace WowPacketParser.Parsing.Parsers
             }
 
             var count = packet.ReadUInt32("BG Instance count");
+            packet.StoreBeginList("Instances");
             for (var i = 0; i < count; i++)
-                packet.ReadUInt32("[" + i + "] Instance ID");
+                packet.ReadUInt32("Instance ID", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_BATTLEGROUND_PORT_AND_LEAVE, ClientVersionBuild.V4_0_6a_13623)]
@@ -431,13 +443,16 @@ namespace WowPacketParser.Parsing.Parsers
             if (val < 1)
             {
                 var result = (BattlegroundError)val;
-                packet.WriteLine("Result: " + result);
+                packet.Store("Result", result);
                 if (result == BattlegroundError.JoinFailedAsGroup ||
                     result == BattlegroundError.CouldntJoinQueueInTime)
                     packet.ReadGuid("GUID");
             }
             else
-                packet.WriteLine("Result: Joined (BGType: " + StoreGetters.GetName(StoreNameType.Battleground, val) + ")");
+            {
+                packet.Store("Result", "Joined");
+                packet.Store("BGType", new StoreEntry(StoreNameType.Battleground, val));
+            }
         }
 
         [Parser(Opcode.SMSG_JOINED_BATTLEGROUND_QUEUE, ClientVersionBuild.V4_2_2_14545)]
@@ -528,10 +543,10 @@ namespace WowPacketParser.Parsing.Parsers
                 || bgError == BattlegroundError430.NotAllowedInBattleground
                 || bgError == BattlegroundError430.JoinFailedAsGroup)
             {
-                packet.WriteLine("GUID: {0:X16}", BitConverter.ToUInt64(guidBytes, 0));
+                packet.StoreBitstreamGuid("GUID", guidBytes);
             }
 
-            packet.WriteLine("BGError: {0}", bgError);
+            packet.Store("BGError", bgError);
         }
 
         [Parser(Opcode.SMSG_JOINED_BATTLEGROUND_QUEUE, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -571,7 +586,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (guidBytes[1] != 0) guidBytes[1] ^= packet.ReadByte();
             if (guidBytes[0] != 0) guidBytes[0] ^= packet.ReadByte();
 
-            packet.WriteLine("Guid: {0}", new Guid(BitConverter.ToUInt64(guidBytes, 0)));
+            packet.StoreBitstreamGuid("Guid", guidBytes);
         }
 
         [Parser(Opcode.MSG_PVP_LOG_DATA)]
@@ -595,6 +610,8 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("Winner");
 
             var count = packet.ReadUInt32("Score count");
+
+            packet.StoreBeginList("PlayerScores");
             for (var i = 0; i < count; i++)
             {
                 packet.ReadGuid("Player GUID", i);
@@ -613,9 +630,12 @@ namespace WowPacketParser.Parsing.Parsers
 
                 var count2 = packet.ReadUInt32("Extra values counter", i);
 
+                packet.StoreBeginList("Extra Values", i);
                 for (var j = 0; j < count2; j++)
                     packet.ReadUInt32("Value", i, j);
+                packet.StoreEndList();
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_BATTLEFIELD_MGR_STATE_CHANGE, ClientVersionBuild.V4_0_6a_13623)]
@@ -712,6 +732,7 @@ namespace WowPacketParser.Parsing.Parsers
             var count = packet.ReadUInt32("Member count");
             packet.ReadUInt32("Type");
 
+            packet.StoreBeginList("TeamMembers");
             for (var i = 0; i < count; i++)
             {
                 packet.ReadGuid(" GUID", i);
@@ -731,6 +752,7 @@ namespace WowPacketParser.Parsing.Parsers
                     packet.ReadSingle("Unk float 2", i);
                 }
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_ARENA_TEAM_ROSTER)]
@@ -754,8 +776,11 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadByte("Event"); // FIXME: Use enum
             var count = packet.ReadByte("Count");
+
+            packet.StoreBeginList("Params");
             for (var i = 0; i < count; ++i)
                 packet.ReadCString("Param", i);
+            packet.StoreEndList();
 
             if (packet.CanRead())
                 packet.ReadGuid("GUID");

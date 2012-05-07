@@ -59,8 +59,10 @@ namespace WowPacketParser.Parsing.Parsers
             if (!packet.ReadBoolean("Name Declined"))
                 return;
 
+            packet.StoreBeginList("Declined Names");
             for (var i = 0; i < 5; i++)
                 packet.ReadCString("Declined Name", i);
+            packet.StoreEndList();
 
             var objectName = new ObjectName
             {
@@ -77,7 +79,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.CMSG_CREATURE_QUERY) || packet.Opcode == Opcodes.GetOpcode(Opcode.CMSG_GAMEOBJECT_QUERY))
                 if (guid.HasEntry() && (entry != guid.GetEntry()))
-                    packet.WriteLine("Entry does not match calculated GUID entry");
+                    packet.Store("Warning", "Entry does not match calculated GUID entry");
         }
 
         [Parser(Opcode.CMSG_CREATURE_QUERY)]
@@ -97,8 +99,10 @@ namespace WowPacketParser.Parsing.Parsers
 
             var nameCount = ClientVersion.AddedInVersion(ClientVersionBuild.V4_1_0_13914) ? 8 : 4; // Might be earlier or later
             var name = new string[nameCount];
+            packet.StoreBeginList("Names");
             for (var i = 0; i < name.Length; i++)
                 name[i] = packet.ReadCString("Name", i);
+            packet.StoreEndList();
             creature.Name = name[0];
 
             creature.SubName = packet.ReadCString("Sub Name");
@@ -128,8 +132,10 @@ namespace WowPacketParser.Parsing.Parsers
             }
 
             creature.DisplayIds = new uint[4];
+            packet.StoreBeginList("Display Ids");
             for (var i = 0; i < 4; i++)
                 creature.DisplayIds[i] = packet.ReadUInt32("Display ID", i);
+            packet.StoreEndList();
 
             creature.Modifier1 = packet.ReadSingle("Modifier 1");
             creature.Modifier2 = packet.ReadSingle("Modifier 2");
@@ -141,8 +147,10 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_1_0_9767))
             {
+                packet.StoreBeginList("Quest Items");
                 for (var i = 0; i < qItemCount; i++)
                     creature.QuestItems[i] = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Quest Item", i);
+                packet.StoreEndList();
 
                 creature.MovementId = packet.ReadUInt32("Movement ID");
             }
@@ -205,6 +213,7 @@ namespace WowPacketParser.Parsing.Parsers
             npcText.Languages = new Language[8];
             npcText.EmoteDelays = new uint[8][];
             npcText.EmoteIds = new EmoteType[8][];
+            packet.StoreBeginList("Npc Texts");
             for (var i = 0; i < 8; i++)
             {
                 npcText.Probabilities[i] = packet.ReadSingle("Probability", i);
@@ -217,12 +226,15 @@ namespace WowPacketParser.Parsing.Parsers
 
                 npcText.EmoteDelays[i] = new uint[3];
                 npcText.EmoteIds[i] = new EmoteType[3];
+                packet.StoreBeginList("Emotes", i);
                 for (var j = 0; j < 3; j++)
                 {
                     npcText.EmoteDelays[i][j] = packet.ReadUInt32("Emote Delay", i, j);
                     npcText.EmoteIds[i][j] = packet.ReadEnum<EmoteType>("Emote ID", TypeCode.UInt32, i, j);
                 }
+                packet.StoreEndList();
             }
+            packet.StoreEndList();
 
             packet.AddSniffData(StoreNameType.NpcText, entry.Key, "QUERY_RESPONSE");
 

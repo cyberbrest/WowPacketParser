@@ -101,6 +101,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("unk");
 
             loot.LootItems = new List<LootItem>(count);
+            packet.StoreBeginList("LootItems");
             for (var i = 0; i < count; ++i)
             {
                 var lootItem = new LootItem();
@@ -113,6 +114,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadEnum<LootSlotType>("Slot Type", TypeCode.Byte, i);
                 loot.LootItems.Add(lootItem);
             }
+            packet.StoreEndList();
 
             // Items do not have item id in its guid, we need to query the wowobject store go
             if (guid.GetObjectType() == ObjectType.Item)
@@ -120,7 +122,7 @@ namespace WowPacketParser.Parsing.Parsers
                 WoWObject item;
                 UpdateField itemEntry;
                 if (Storage.Objects.TryGetValue(guid, out item))
-                    if (item.UpdateFields.TryGetValue(UpdateFields.GetUpdateField(ObjectField.OBJECT_FIELD_ENTRY), out itemEntry))
+                    if (item.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_ENTRY), out itemEntry))
                     {
                         Storage.Loots.TryAdd(new Tuple<uint, ObjectType>(itemEntry.UInt32Value, guid.GetObjectType()), loot);
                         return;

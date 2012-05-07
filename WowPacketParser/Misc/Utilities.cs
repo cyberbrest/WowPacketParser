@@ -14,6 +14,11 @@ namespace WowPacketParser.Misc
     {
         private static readonly DateTime Epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
+        public static E GetEnumForValue<E, T>(T value) where E : struct
+        {
+            return (E)Enum.ToObject(typeof(E), value);
+        }
+
         public static DateTime GetDateTimeFromUnixTime(double unixTime)
         {
             return Epoch.AddSeconds(unixTime);
@@ -130,6 +135,23 @@ namespace WowPacketParser.Misc
             Trace.AutoFlush = true;
         }
 
+        public static void RemoveConfigOptions(ref List<string> files)
+        {
+            for (var i = 0; i < files.Count - 1; ++i)
+            {
+                if (files[i][0] == '/')
+                {
+                    // remove value
+                    files.RemoveAt(i + 1);
+                    // remove option name
+                    files.RemoveAt(i);
+                    --i;
+                    continue;
+                }
+                break;
+            }
+        }
+
         public static bool GetFiles(ref List<string> files)
         {
             if (files.Count == 1 && files[0].Contains('*'))
@@ -154,6 +176,7 @@ namespace WowPacketParser.Misc
                     Trace.WriteLine("File " + files[i] + " was not found, removed.");
                     files.RemoveAt(i);
                     --i;
+                    continue;
                 }
             }
 

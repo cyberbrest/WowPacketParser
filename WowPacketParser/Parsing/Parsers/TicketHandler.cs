@@ -11,8 +11,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleGMTicketCreate(Packet packet)
         {
             packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID");
-            var vector = packet.ReadVector3();
-            packet.WriteLine("Position: {0}", vector);
+            packet.ReadVector3("Position");
             packet.ReadCString("Text");
             packet.ReadUInt32("Unk UInt32 1");
             packet.ReadBoolean("Need Response");
@@ -37,8 +36,10 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Unk 1");
             packet.ReadUInt32("Unk 2");
             packet.ReadCString("Text");
+            packet.StoreBeginList("Responses");
             for (var i = 1; i <= 4; i++)
                 packet.ReadCString("Response", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_GMTICKET_GETTICKET)]

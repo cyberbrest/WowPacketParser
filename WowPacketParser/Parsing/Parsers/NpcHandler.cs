@@ -75,6 +75,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             var count = packet.ReadInt32("Count");
             npcTrainer.TrainerSpells = new List<TrainerSpell>(count);
+            packet.StoreBeginList("Trainer spells");
             for (var i = 0; i < count; i++)
             {
                 var trainerSpell = new TrainerSpell();
@@ -112,6 +113,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                 npcTrainer.TrainerSpells.Add(trainerSpell);
             }
+            packet.StoreEndList();
 
             npcTrainer.Title = packet.ReadCString("Title");
 
@@ -128,6 +130,7 @@ namespace WowPacketParser.Parsing.Parsers
             var itemCount = packet.ReadByte("Item Count");
 
             npcVendor.VendorItems = new List<VendorItem>(itemCount);
+            packet.StoreBeginList("Vendor items");
             for (var i = 0; i < itemCount; i++)
             {
                 var vendorItem = new VendorItem();
@@ -141,6 +144,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadUInt32("Buy Count", i);
                 vendorItem.ExtendedCostId = packet.ReadUInt32("Extended Cost", i);
             }
+            packet.StoreEndList();
 
             Storage.NpcVendors.TryAdd(guid.GetEntry(), npcVendor);
         }
@@ -176,11 +180,10 @@ namespace WowPacketParser.Parsing.Parsers
             if (guidBytes[7] != 0) guidBytes[7] ^= packet.ReadByte();
             if (guidBytes[6] != 0) guidBytes[6] ^= packet.ReadByte();
 
-
-            var guid = new Guid(BitConverter.ToUInt64(guidBytes, 0));
-            packet.WriteLine("GUID: {0}", guid);
+            var guid = packet.StoreBitstreamGuid("GUID", guidBytes);
 
             npcVendor.VendorItems = new List<VendorItem>((int)itemCount);
+            packet.StoreBeginList("Vendor items");
             for (var i = 0; i < itemCount; i++)
             {
                 var vendorItem = new VendorItem();
@@ -198,6 +201,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                 npcVendor.VendorItems.Add(vendorItem);
             }
+            packet.StoreEndList();
 
             Storage.NpcVendors.TryAdd(guid.GetEntry(), npcVendor);
         }
@@ -247,6 +251,7 @@ namespace WowPacketParser.Parsing.Parsers
             var count = packet.ReadUInt32("Amount of Options");
 
             gossip.GossipOptions = new List<GossipOption>((int) count);
+            packet.StoreBeginList("Gossip Options");
             for (var i = 0; i < count; i++)
             {
                 var gossipOption = new GossipOption
@@ -261,10 +266,13 @@ namespace WowPacketParser.Parsing.Parsers
 
                 gossip.GossipOptions.Add(gossipOption);
             }
+            packet.StoreEndList();
+
             Storage.Gossips.TryAdd(Tuple.Create(menuId, textId), gossip);
             packet.AddSniffData(StoreNameType.Gossip, (int)menuId, guid.GetEntry().ToString(CultureInfo.InvariantCulture));
 
             var questgossips = packet.ReadUInt32("Amount of Quest gossips");
+            packet.StoreBeginList("Quest Gossips");
             for (var i = 0; i < questgossips; i++)
             {
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest ID", i);
@@ -275,32 +283,31 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadBoolean("Unk Bool", i);
                 packet.ReadCString("Title", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_THREAT_UPDATE)]
         [Parser(Opcode.SMSG_HIGHEST_THREAT_UPDATE)]
         public static void HandleThreatlistUpdate(Packet packet)
         {
-            var guid = packet.ReadPackedGuid();
-            packet.WriteLine("GUID: " + guid);
+            packet.ReadPackedGuid("GUID");
 
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_HIGHEST_THREAT_UPDATE))
             {
-                var newhigh = packet.ReadPackedGuid();
-                packet.WriteLine("New Highest: " + newhigh);
+                packet.ReadPackedGuid("New Highest");
             }
 
-            var count = packet.ReadUInt32();
-            packet.WriteLine("Size: " + count);
+            var count = packet.ReadUInt32("Size");
+            packet.StoreBeginList("Threat lists");
             for (int i = 0; i < count; i++)
             {
-                packet.ReadPackedGuid("Hostile");
-                var threat = packet.ReadUInt32();
+                packet.ReadPackedGuid("Hostile", i);
+                var threat = packet.ReadUInt32("Threat", i);
                 // No idea why, but this is in core. There is nothing about this in client
                 /*if (packet.Opcode == Opcode.SMSG_THREAT_UPDATE)
                     threat *= 100;*/
-                packet.WriteLine("Threat: " + threat);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_THREAT_CLEAR)]

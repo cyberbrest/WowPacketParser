@@ -18,39 +18,47 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
             {
+                packet.StoreBeginList("Reward Choice Items");
                 for (var i = 0; i < effectiveChoiceCount; i++)
                     packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Choice Item Id", i);
                 for (var i = 0; i < effectiveChoiceCount; i++)
                     packet.ReadUInt32("Choice Item Count", i);
                 for (var i = 0; i < effectiveChoiceCount; i++)
                     packet.ReadUInt32("Choice Item Display Id", i);
+                packet.StoreEndList();
 
                 packet.ReadUInt32("Reward Item Count");
                 const int effectiveRewardCount = 4;
 
+                packet.StoreBeginList("Reward Items");
                 for (var i = 0; i < effectiveRewardCount; i++)
                     packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Reward Item Id", i);
                 for (var i = 0; i < effectiveRewardCount; i++)
                     packet.ReadUInt32("Reward Item Count", i);
                 for (var i = 0; i < effectiveRewardCount; i++)
                     packet.ReadUInt32("Reward Item Display Id", i);
+                packet.StoreEndList();
             }
             else
             {
+                packet.StoreBeginList("Reward Choice Items");
                 for (var i = 0; i < choiceCount; i++)
                 {
                     packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Choice Item Id", i);
                     packet.ReadUInt32("Choice Item Count", i);
                     packet.ReadUInt32("Choice Item Display Id", i);
                 }
+                packet.StoreEndList();
 
                 var rewardCount = packet.ReadUInt32("Reward Item Count");
+                packet.StoreBeginList("Reward Items");
                 for (var i = 0; i < rewardCount; i++)
                 {
                     packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Reward Item Id", i);
                     packet.ReadUInt32("Reward Item Count", i);
                     packet.ReadUInt32("Reward Item Display Id", i);
                 }
+                packet.StoreEndList();
             }
 
             packet.ReadUInt32("Money");
@@ -90,6 +98,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_0_10958))
             {
+                packet.StoreBeginList("Reputations");
                 for (var i = 0; i < 5; i++)
                     packet.ReadUInt32("Reputation Faction", i);
 
@@ -98,6 +107,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                 for (var i = 0; i < 5; i++)
                     packet.ReadInt32("Reputation Value", i);
+                packet.StoreEndList();
             }
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
@@ -105,10 +115,12 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell Id");
                 packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell Cast Id");
 
+                packet.StoreBeginList("Currencies");
                 for (var i = 0; i < 4; i++)
                     packet.ReadUInt32("Currency Id", i);
                 for (var i = 0; i < 4; i++)
                     packet.ReadUInt32("Currency Count", i);
+                packet.StoreEndList();
 
                 packet.ReadUInt32("Unknown UInt32");
                 packet.ReadUInt32("Unknown UInt32");
@@ -146,11 +158,13 @@ namespace WowPacketParser.Parsing.Parsers
 
             quest.RequiredFactionId = new uint[2];
             quest.RequiredFactionValue = new int[2];
+            packet.StoreBeginList("Required Factions");
             for (var i = 0; i < 2; i++)
             {
                 quest.RequiredFactionId[i] = packet.ReadUInt32("Required Faction ID", i);
                 quest.RequiredFactionValue[i] = packet.ReadInt32("Required Faction Rep", i);
             }
+            packet.StoreEndList();
 
             quest.NextQuestIdChain = (uint) packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Next Chain Quest");
 
@@ -200,19 +214,23 @@ namespace WowPacketParser.Parsing.Parsers
 
             quest.RewardItemId = new uint[4];
             quest.RewardItemCount = new uint[4];
+            packet.StoreBeginList("Reward Items");
             for (var i = 0; i < 4; i++)
             {
                 quest.RewardItemId[i] = (uint) packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Reward Item ID", i);
                 quest.RewardItemCount[i] = packet.ReadUInt32("Reward Item Count", i);
             }
+            packet.StoreEndList();
 
             quest.RewardChoiceItemId = new uint[6];
             quest.RewardChoiceItemCount = new uint[6];
+            packet.StoreBeginList("Reward Choice items");
             for (var i = 0; i < 6; i++)
             {
                 quest.RewardChoiceItemId[i] = (uint) packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Reward Choice Item ID", i);
                 quest.RewardChoiceItemCount[i] = packet.ReadUInt32("Reward Choice Item Count", i);
             }
+            packet.StoreEndList();
 
             const int repCount = 5;
             quest.RewardFactionId = new uint[repCount];
@@ -220,6 +238,7 @@ namespace WowPacketParser.Parsing.Parsers
             quest.RewardFactionValueIdOverride = new uint[repCount];
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_0_10958))
             {
+                packet.StoreBeginList("Reward Reputations");
                 for (var i = 0; i < repCount; i++)
                     quest.RewardFactionId[i] = packet.ReadUInt32("Reward Faction ID", i);
 
@@ -228,6 +247,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                 for (var i = 0; i < repCount; i++)
                     quest.RewardFactionValueIdOverride[i] = packet.ReadUInt32("Reward Reputation ID Override", i);
+                packet.StoreEndList();
             }
 
             quest.PointMapId = packet.ReadUInt32("Point Map ID");
@@ -258,14 +278,14 @@ namespace WowPacketParser.Parsing.Parsers
             quest.RequiredItemId = new uint[reqItemFieldCount];
             quest.RequiredItemCount = new uint[reqItemFieldCount];
 
+            packet.StoreBeginList("Requirements");
             for (var i = 0; i < 4; i++)
             {
                 reqId[i] = packet.ReadEntry();
                 quest.RequiredNpcOrGo[i] = reqId[i].Key;
                 var isGo = reqId[i].Value;
 
-                packet.WriteLine("[" + i + "] Required " + (isGo ? "GO" : "NPC") +
-                    " ID: " + StoreGetters.GetName(isGo ? StoreNameType.GameObject : StoreNameType.Unit, reqId[i].Key));
+                packet.Store("Required " +(isGo ? "GO" : "NPC")+" Entry", new StoreEntry(isGo ? StoreNameType.GameObject : StoreNameType.Unit, reqId[i].Key), i);
 
                 quest.RequiredNpcOrGoCount[i] = packet.ReadUInt32("Required Count", i);
 
@@ -281,22 +301,27 @@ namespace WowPacketParser.Parsing.Parsers
                     quest.RequiredItemCount[i] = packet.ReadUInt32("Required Item Count", i);
                 }
             }
+            packet.StoreEndList();
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_0_8_9464))
             {
+                packet.StoreBeginList("Required items");
                 for (var i = 0; i < reqItemFieldCount; i++)
                 {
                     quest.RequiredItemId[i] = (uint) packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Required Item ID", i);
                     quest.RequiredItemId[i] = packet.ReadUInt32("Required Item Count", i);
                 }
+                packet.StoreEndList();
             }
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
                 quest.RequiredSpell = (uint) packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Required Spell");
 
             quest.ObjectiveText = new string[4];
+            packet.StoreBeginList("Objective Texts");
             for (var i = 0; i < 4; i++)
                 quest.ObjectiveText[i] = packet.ReadCString("Objective Text", i);
+            packet.StoreEndList();
 
             quest.RewardCurrencyId = new uint[4];
             quest.RewardCurrencyCount = new uint[4];
@@ -304,17 +329,21 @@ namespace WowPacketParser.Parsing.Parsers
             quest.RequiredCurrencyCount = new uint[4];
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
             {
+                packet.StoreBeginList("Reward Currencies");
                 for (var i = 0; i < 4; ++i)
                 {
                     quest.RewardCurrencyId[i] = packet.ReadUInt32("Reward Currency ID", i);
                     quest.RewardCurrencyCount[i] = packet.ReadUInt32("Reward Currency Count", i);
                 }
+                packet.StoreEndList();
 
+                packet.StoreBeginList("Required Currencies");
                 for (var i = 0; i < 4; ++i)
                 {
                     quest.RequiredCurrencyId[i] = packet.ReadUInt32("Required Currency ID", i);
                     quest.RequiredCurrencyCount[i] = packet.ReadUInt32("Required Currency Count", i);
                 }
+                packet.StoreEndList();
 
                 quest.QuestGiverTextWindow = packet.ReadCString("QuestGiver Text Window");
                 quest.QuestGiverTargetName = packet.ReadCString("QuestGiver Target Name");
@@ -354,8 +383,10 @@ namespace WowPacketParser.Parsing.Parsers
             else
                 count = packet.ReadInt32("Count");
 
+            packet.StoreBeginList("Quests");
             for (var i = 0; i < count; i++)
                 packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_QUEST_NPC_QUERY_RESPONSE)]
@@ -363,15 +394,19 @@ namespace WowPacketParser.Parsing.Parsers
         {
             var count = packet.ReadUInt32("Count");
 
+            packet.StoreBeginList("Quests");
             for (var i = 0; i < count; ++i)
             {
                 var count2 = packet.ReadUInt32("Number of NPC", i);
+                packet.StoreBeginList("Npcs", i);
                 for (var j = 0; j < count2; ++j)
                     packet.ReadEntryWithName<Int32>(StoreNameType.Unit, "NPC ID", i, j);
+                packet.StoreEndList();
             }
 
             for (var i = 0; i < count; ++i)
                 packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_QUEST_POI_QUERY_RESPONSE)]
@@ -379,11 +414,13 @@ namespace WowPacketParser.Parsing.Parsers
         {
             var count = packet.ReadInt32("Count");
 
+            packet.StoreBeginList("Quests");
             for (var i = 0; i < count; i++)
             {
                 var questId = packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID", i);
 
                 var counter = packet.ReadInt32("POI Counter", i);
+                packet.StoreBeginList("POIs", i);
                 for (var j = 0; j < counter; j++)
                 {
                     var questPoi = new QuestPOI();
@@ -391,7 +428,7 @@ namespace WowPacketParser.Parsing.Parsers
                     var idx = packet.ReadInt32("POI Index", i, j);
                     questPoi.ObjectiveIndex = packet.ReadInt32("Objective Index", i, j);
 
-                    questPoi.Map = packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map Id", i);
+                    questPoi.Map = packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map Id", i, j);
                     questPoi.WorldMapAreaId = packet.ReadInt32("World Map Area", i, j);
                     questPoi.FloorId = packet.ReadInt32("Floor Id", i, j);
                     questPoi.UnkInt1 = packet.ReadInt32("Unk Int32 2", i, j);
@@ -399,6 +436,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                     var pointsSize = packet.ReadInt32("Points Counter", i, j);
                     questPoi.Points = new List<QuestPOIPoint>(pointsSize);
+                    packet.StoreBeginList("POI Points", i, j);
                     for (var k = 0; k < pointsSize; k++)
                     {
                         var questPoiPoint = new QuestPOIPoint
@@ -409,10 +447,13 @@ namespace WowPacketParser.Parsing.Parsers
                                             };
                         questPoi.Points.Add(questPoiPoint);
                     }
+                    packet.StoreEndList();
 
                     Storage.QuestPOIs.TryAdd(new Tuple<uint, uint>((uint) questId, (uint) idx), questPoi);
                 }
+                packet.StoreEndList();
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_QUEST_FORCE_REMOVE)]
@@ -442,11 +483,13 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
             packet.ReadInt32("Unk Int32");
             var emoteCount = packet.ReadUInt32("Quest Emote Count");
+            packet.StoreBeginList("Emotes");
             for (var i = 0; i < emoteCount; i++)
             {
                 packet.ReadUInt32("Emote Id", i);
                 packet.ReadUInt32("Emote Delay (ms)", i);
             }
+            packet.StoreEndList();
 
             ReadExtraQuestInfo(ref packet);
         }
@@ -454,14 +497,13 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_QUERY_QUESTS_COMPLETED_RESPONSE)]
         public static void HandleQuestCompletedResponse(Packet packet)
         {
-            packet.ReadInt32("Count");
+            var count = packet.ReadInt32("Count");
             // Prints ~4k lines of quest IDs, should be DEBUG only or something...
-            /*
+            packet.Store("Comment", "Packet contains a lot of quest ids, data is ignored to save space");
+
             for (var i = 0; i < count; i++)
-                packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Rewarded Quest");
-            */
-            packet.WriteLine("Packet is currently not printed");
-            packet.ReadBytes((int)packet.Length);
+                packet.ReadInt32();
+                //packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Rewarded Quest");
         }
 
         [Parser(Opcode.CMSG_QUESTGIVER_STATUS_QUERY)]
@@ -481,6 +523,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Emote");
 
             var count = packet.ReadByte("Count");
+            packet.StoreBeginList("Quests");
             for (var i = 0; i < count; i++)
             {
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest ID", i);
@@ -490,6 +533,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadBoolean("Change icon", i);
                 packet.ReadCString("Title", i);
             }
+            packet.StoreEndList();
 
         }
 
@@ -567,11 +611,13 @@ namespace WowPacketParser.Parsing.Parsers
             ReadExtraQuestInfo(ref packet);
 
             var emoteCount = packet.ReadUInt32("Quest Emote Count");
+            packet.StoreBeginList("Emotes");
             for (var i = 0; i < emoteCount; i++)
             {
                 packet.ReadUInt32("Emote Id", i);
                 packet.ReadUInt32("Emote Delay (ms)", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.CMSG_QUESTGIVER_REQUEST_REWARD)]
@@ -620,12 +666,14 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Money");
 
             var count = packet.ReadUInt32("Required Item Count");
+            packet.StoreBeginList("Required Items");
             for (var i = 0; i < count; i++)
             {
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Required Item Id", i);
                 packet.ReadUInt32("Required Item Count", i);
                 packet.ReadUInt32("Required Item Display Id", i);
             }
+            packet.StoreEndList();
 
             // flags
             packet.ReadUInt32("Unk flags 1");
@@ -669,11 +717,13 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Suggested Players");
 
             var count1 = packet.ReadUInt32("Emote Count");
+            packet.StoreBeginList("Emotes");
             for (var i = 0; i < count1; i++)
             {
                 packet.ReadUInt32("Emote Delay", i);
                 packet.ReadEnum<EmoteType>("Emote Id", TypeCode.UInt32, i);
             }
+            packet.StoreEndList();
 
             ReadExtraQuestInfo(ref packet);
         }
@@ -705,17 +755,11 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID");
             packet.ReadInt32("Reward");
             packet.ReadInt32("Money");
-            var honor = packet.ReadInt32();
-            if (honor < 0)
-                packet.WriteLine("Honor: " + honor);
+            packet.ReadInt32("Honor");
 
-            var talentpoints = packet.ReadInt32();
-            if (talentpoints < 0)
-                packet.WriteLine("Talentpoints: " + talentpoints);
+            packet.ReadInt32("Talentpoints");
 
-            var arenapoints = packet.ReadInt32();
-            if (arenapoints < 0)
-                packet.WriteLine("Arenapoints: " + arenapoints);
+            packet.ReadInt32("Arenapoints");
         }
 
         [Parser(Opcode.SMSG_QUESTGIVER_QUEST_COMPLETE, ClientVersionBuild.V4_0_6a_13623, ClientVersionBuild.V4_2_2_14545)]
@@ -776,30 +820,23 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
             {
+                packet.StoreBeginList("Questgivers");
                 for (int i = 0; i < count; i++)
                 {
                     packet.ReadGuid("GUID", i);
                     packet.ReadEnum<QuestGiverStatus4x>("Status", TypeCode.Int32, i);
                 }
+                packet.StoreEndList();
             }
             else
             {
+                packet.StoreBeginList("Questgivers");
                 for (int i = 0; i < count; i++)
                 {
                     packet.ReadGuid("GUID", i);
                     packet.ReadEnum<QuestGiverStatus>("Status", TypeCode.Byte, i);
                 }
-            }
-        }
-
-
-        public static void HandleQuestgiverStatusMultiple(Packet packet)
-        {
-            var count = packet.ReadUInt32("Count");
-            for (var i = 0; i < count; i++)
-            {
-                packet.ReadGuid("GUID");
-                packet.ReadEnum<QuestGiverStatus>("Status", TypeCode.Byte);
+                packet.StoreEndList();
             }
         }
 

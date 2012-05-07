@@ -30,17 +30,20 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadInt32("Counter");
 
             var numFields = packet.ReadInt32("Member Count");
+
+            packet.StoreBeginList("Members");
             for (var i = 0; i < numFields; i++)
             {
-                packet.ReadCString("[" + i + "] Name");
-                packet.ReadGuid("[" + i + "] GUID");
-                packet.ReadEnum<GroupMemberStatusFlag>("[" + i + "] Status", TypeCode.Byte);
-                packet.ReadByte("[" + i + "] Sub Group");
-                packet.ReadEnum<GroupUpdateFlag>("[" + i + "] Update Flags", TypeCode.Byte);
+                packet.ReadCString("Name", i);
+                packet.ReadGuid("GUID", i);
+                packet.ReadEnum<GroupMemberStatusFlag>("Status", TypeCode.Byte, i);
+                packet.ReadByte("Sub Group", i);
+                packet.ReadEnum<GroupUpdateFlag>("Update Flags", TypeCode.Byte, i);
 
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_0_10958))
-                    packet.ReadEnum<LfgRoleFlag>("[" + i + "] Role", TypeCode.Byte);
+                    packet.ReadEnum<LfgRoleFlag>("Role", TypeCode.Byte, i);
             }
+            packet.StoreEndList();
 
             packet.ReadGuid("Leader GUID");
 
@@ -120,6 +123,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("Unk byte");
                 var mask = packet.ReadUInt64("Aura mask");
                 var cnt = packet.ReadUInt32("Aura count");
+                packet.StoreBeginList("Auras");
                 for (var i = 0; i < cnt; ++i)
                 {
                     if ((mask & (1ul << i)) == 0)
@@ -128,9 +132,14 @@ namespace WowPacketParser.Parsing.Parsers
                     packet.ReadUInt32("Spell Id", i);
                     var aflags = packet.ReadEnum<AuraFlag>("AuraFlags", TypeCode.UInt16, i);
                     if (aflags.HasAnyFlag(AuraFlag.Scalable))
+                    {
+                        packet.StoreBeginList("EffectsBasePoints", i);
                         for (var j = 0; j < 3; ++j)
                             packet.ReadInt32("Effect BasePoints", i, j);
+                        packet.StoreEndList();
+                    }
                 }
+                packet.StoreEndList();
             }
 
             if (updateFlags.HasAnyFlag(0x800))
@@ -162,6 +171,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("Unk byte");
                 var mask = packet.ReadUInt64("Pet Aura mask");
                 var cnt = packet.ReadUInt32("Pet Aura count");
+                packet.StoreBeginList("Auras");
                 for (var i = 0; i < cnt; ++i)
                 {
                     if ((mask & (1ul << i)) == 0)
@@ -170,9 +180,14 @@ namespace WowPacketParser.Parsing.Parsers
                     packet.ReadUInt32("Spell Id", i);
                     var aflags = packet.ReadEnum<AuraFlag>("AuraFlags", TypeCode.UInt16, i);
                     if (aflags.HasAnyFlag(AuraFlag.Scalable))
+                    {
+                        packet.StoreBeginList("EffectsBasePoints", i);
                         for (var j = 0; j < 3; ++j)
                             packet.ReadInt32("Effect BasePoints", i, j);
+                        packet.StoreEndList();
+                    }
                 }
+                packet.StoreEndList();
             }
 
             if (updateFlags.HasAnyFlag(0x100000))
@@ -242,15 +257,17 @@ namespace WowPacketParser.Parsing.Parsers
                 var auraMask = packet.ReadUInt64("Auramask");
 
                 var maxAura = ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) ? 64 : 56;
+                packet.StoreBeginList("Auras");
                 for (var i = 0; i < maxAura; ++i)
                 {
                     if ((auraMask & (1ul << i)) == 0)
                         continue;
 
                     var aura = ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) ? packet.ReadInt32() : packet.ReadUInt16();
-                    packet.WriteLine("Slot: [" + i + "] Spell ID: " + StoreGetters.GetName(StoreNameType.Spell, aura));
-                    packet.ReadEnum<AuraFlag>("Slot: [" + i + "] Aura flag", TypeCode.Byte);
+                    packet.Store("Spell ID", new StoreEntry(StoreNameType.Spell, aura), i);
+                    packet.ReadEnum<AuraFlag>("Aura flag", TypeCode.Byte, i);
                 }
+                packet.StoreEndList();
             }
 
             if (updateFlags.HasAnyFlag(GroupUpdateFlag.PetGuid))
@@ -290,17 +307,19 @@ namespace WowPacketParser.Parsing.Parsers
             if (updateFlags.HasAnyFlag(GroupUpdateFlag.PetAuras))
             {
                 var auraMask = packet.ReadUInt64("Pet Auramask");
-
+                
                 var maxAura = ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) ? 64 : 56;
+                packet.StoreBeginList("Pet Auras");
                 for (var i = 0; i < maxAura; ++i)
                 {
                     if ((auraMask & (1ul << i)) == 0)
                         continue;
 
                     var aura = ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) ? packet.ReadInt32() : packet.ReadUInt16();
-                    packet.WriteLine("Slot: [" + i + "] Spell ID: " + StoreGetters.GetName(StoreNameType.Spell, aura));
-                    packet.ReadEnum<AuraFlag>("Slot: [" + i + "] Aura flag", TypeCode.Byte);
+                    packet.Store("Spell ID", new StoreEntry(StoreNameType.Spell, aura), i);
+                    packet.ReadEnum<AuraFlag>("Aura flag", TypeCode.Byte, i);
                 }
+                packet.StoreEndList();
             }
 
             if (ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing) && // no idea when this was added exactly, doesn't exist in 2.4.1
@@ -360,7 +379,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (guidBytes[3] != 0) guidBytes[3] ^= packet.ReadByte();
 
             // Non-zero in cross realm parties
-            packet.WriteLine("GUID: {0}", new Guid(BitConverter.ToUInt64(guidBytes, 0)));
+            packet.StoreBitstreamGuid("GUID", guidBytes);
         }
 
         [Parser(Opcode.SMSG_GROUP_INVITE)]
@@ -370,8 +389,10 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadCString("Name");
             packet.ReadInt32("Unk Int32 1");
             var count = packet.ReadByte("Count");
+            packet.StoreBeginList("UnkData");
             for (var i = 0; i < count; ++i)
                 packet.ReadUInt32("Unk Uint32", i);
+            packet.StoreEndList();
 
             packet.ReadInt32("Unk Int32 2");
         }
@@ -477,8 +498,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (packet.Direction == Direction.ServerToClient)
                 packet.ReadGuid("GUID");
 
-            var position = packet.ReadVector2();
-            packet.WriteLine("Position: " + position);
+            packet.ReadVector2("Position");
         }
 
         [Parser(Opcode.CMSG_GROUP_RAID_CONVERT)]
