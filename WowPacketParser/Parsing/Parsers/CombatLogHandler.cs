@@ -266,8 +266,8 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadByte("Unk byte");
             packet.ReadUInt32("Blocked");
             var type = packet.ReadEnum<SpellHitType>("HitType", TypeCode.Int32);
-            var debug = packet.ReadBoolean("Debug output");
-            if (debug)
+
+            if (packet.ReadBoolean("Debug output"))
             {
                 if (!type.HasAnyFlag(SpellHitType.SPELL_HIT_TYPE_UNK4))
                 {
@@ -311,6 +311,11 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.ReadBoolean("Critical");
             packet.ReadBoolean("Debug output");
+            if (packet.ReadBoolean("Debug output"))
+            {
+                packet.ReadSingle("Unk float");
+                packet.ReadSingle("Unk float 2");
+            }
         }
 
         private static void ReadSpellEnergizeLog(ref Packet packet)
@@ -326,7 +331,7 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell ID");
             packet.ReadGuid("Caster GUID");
-            var unkbool = packet.ReadBoolean("Unk bool");
+            var debug = packet.ReadBoolean("Debug output");
 
             var count = packet.ReadUInt32("Target Count");
 
@@ -335,7 +340,7 @@ namespace WowPacketParser.Parsing.Parsers
             {
                 packet.ReadGuid("Target GUID", i);
                 packet.ReadEnum<SpellMissType>("Miss Info", TypeCode.Byte, i);
-                if (unkbool)
+                if (debug)
                 {
                     packet.ReadSingle("Unk float", i);
                     packet.ReadSingle("Unk float", i);
