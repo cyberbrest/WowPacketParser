@@ -104,6 +104,7 @@ namespace WowPacketParser.SQL.Builders
 
                 var entry = uf.UInt32Value;
 
+                if (go.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_BYTES_1), out uf))
                 {
                     var bytes = uf.UInt32Value;
                     state = (bytes & 0x000000FF);

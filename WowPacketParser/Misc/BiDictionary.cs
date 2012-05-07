@@ -55,6 +55,16 @@ namespace WowPacketParser.Misc
             return _secondToFirst.TryGetValue(second, out value) ? value : default(TFirst);
         }
 
+        public bool TryGetByFirst(TFirst first, out TSecond value)
+        {
+            return _firstToSecond.TryGetValue(first, out value);
+        }
+
+        public bool TryGetBySecond(TSecond second, out TFirst value)
+        {
+            return _secondToFirst.TryGetValue(second, out value);
+        }
+
         public IEnumerator<KeyValuePair<TFirst, TSecond>> GetEnumerator()
         {
             return _firstToSecond.GetEnumerator();
