@@ -32,6 +32,7 @@ namespace WowPacketParser.Misc
             Direction = direction;
             Number = number;
             StoreData = new NameDict();
+            StoreDataCache = StoreData;
             StoreIndexedLists = new LinkedList<Tuple<NameDict, IndexDict>>();
             StoreObjects = new Stack<Tuple<NameDict, LinkedList<Tuple<NameDict, IndexDict>>>>();
             FileName = fileName;
@@ -50,6 +51,7 @@ namespace WowPacketParser.Misc
             Direction = parent.Direction;
             Number = parent.Number;
             StoreData = new NameDict();
+            StoreDataCache = StoreData;
             StoreIndexedLists = new LinkedList<Tuple<NameDict, IndexDict>>();
             StoreObjects = new Stack<Tuple<NameDict, LinkedList<Tuple<NameDict, IndexDict>>>>();
             FileName = parent.FileName;
@@ -160,7 +162,8 @@ namespace WowPacketParser.Misc
 
         public void ClosePacket()
         {
-            BaseStream.Close();
+            if (BaseStream != null)
+                BaseStream.Close();
             Dispose(true);
         }
     }
