@@ -223,7 +223,6 @@ namespace WowPacketParser.Store.Objects
                         result[i] = (TK)(object)uf.SingleValue;
                 }
 
-
             return result;
         }
 

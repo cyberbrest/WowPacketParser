@@ -15,6 +15,9 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadUInt32("Gold");
 
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
+                packet.ReadUInt32("Guild Gold");
+
             if (ClientVersion.AddedInVersion(ClientType.WrathOfTheLichKing)) // no idea when this was added, doesn't exist in 2.4.1
                 packet.ReadBoolean("Solo Loot"); // true = YOU_LOOT_MONEY, false = LOOT_MONEY_SPLIT
         }
@@ -41,7 +44,6 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadGuid("Master GUID");
             packet.ReadEnum<ItemQuality>("Loot Threshold", TypeCode.UInt32);
         }
-
 
         [Parser(Opcode.CMSG_OPT_OUT_OF_LOOT)]
         public static void HandleOptOutOfLoot(Packet packet)
@@ -97,7 +99,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             var count = packet.ReadByte("Drop Count");
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_0_14333))
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
                 packet.ReadByte("unk");
 
             loot.LootItems = new List<LootItem>(count);

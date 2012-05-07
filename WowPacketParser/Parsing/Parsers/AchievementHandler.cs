@@ -98,6 +98,44 @@ namespace WowPacketParser.Parsing.Parsers
             ReadAllAchievementData(ref packet);
         }
 
+        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_0_6a_13623)]
+        public static void HandleAllAchievementData406(Packet packet)
+        {
+            var achievements = packet.ReadUInt32("Achievement count");
+            var criterias = packet.ReadUInt32("Criterias count");
+
+            var achievementsList = packet.StoreBeginList("Achievements");
+            for (var i = 0; i < achievements; ++i)
+                packet.ReadUInt32("Achievement Id", 1, i);
+
+            for (var i = 0; i < achievements; ++i)
+                packet.ReadPackedTime("Achievement Time", 1, i);
+            packet.StoreEndList();
+
+            var criteriasList = packet.StoreBeginList("Criterias");
+            for (var i = 0; i < criterias; ++i)
+                packet.ReadUInt64("Counter", 0, i);
+
+            for (var i = 0; i < criterias; ++i)
+                packet.ReadUInt32("Criteria Timer 1", 0, i);
+
+            for (var i = 0; i < criterias; ++i)
+                packet.ReadPackedTime("Criteria Time", 0, i);
+
+            for (var i = 0; i < criterias; ++i)
+                packet.ReadGuid("Player GUID", 0, i);
+
+            for (var i = 0; i < criterias; ++i)
+                packet.ReadUInt32("Criteria Timer 2", 0, i);
+
+            for (var i = 0; i < criterias; ++i)
+                packet.ReadBits("Flag", 2, 0, i);
+
+            for (var i = 0; i < criterias; ++i)
+                packet.ReadUInt32("Criteria Id", 0, i);
+            packet.StoreEndList();
+        }
+
         [Parser(Opcode.CMSG_QUERY_INSPECT_ACHIEVEMENTS)]
         public static void HandleInspectAchievementData(Packet packet)
         {
@@ -129,49 +167,53 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleCompressedAllAchievementData(Packet packet)
         {
             packet.Inflate(packet.ReadInt32());
-            HandleAllAchievementData422(packet);
+                if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
+                    HandleAllAchievementData422(packet);
+                else if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
+                    HandleAllAchievementData406(packet);
+                else
+                    HandleAllAchievementData(packet);
         }
 
         [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleAllAchievementData422(Packet packet)
         {
-            var count1 = packet.ReadUInt32("Count1");
-
-            var criterias = packet.StoreBeginList("Criterias");
-            for (var i = 0; i < count1; ++i)
+            var criterias = packet.ReadUInt32("Criterias Count");
+            var criteriasList = packet.StoreBeginList("Criterias");
+            for (var i = 0; i < criterias; ++i)
                 packet.ReadBits("Flag", 2, i);
 
-            for (var i = 0; i < count1; ++i)
+            for (var i = 0; i < criterias; ++i)
                 packet.ReadUInt64("Counter", i);
             packet.StoreEndList();
 
-            var count2 = packet.ReadUInt32("Count2");
-            var achievements = packet.StoreBeginList("Achievements");
-            for (var i = 0; i < count2; ++i)
+            var achievements = packet.ReadUInt32("Achievement Count");
+            var achievementsList = packet.StoreBeginList("Achievements");
+            for (var i = 0; i < achievements; ++i)
                 packet.ReadPackedTime("Achievement Time", i);
             packet.StoreEndList();
 
-            packet.StoreContinueList(criterias);
-            for (var i = 0; i < count1; ++i)
+            packet.StoreContinueList(criteriasList);
+            for (var i = 0; i < criterias; ++i)
                 packet.ReadGuid("Player GUID", i);
 
-            for (var i = 0; i < count1; ++i)
+            for (var i = 0; i < criterias; ++i)
                 packet.ReadPackedTime("Criteria Time",i);
 
-            for (var i = 0; i < count1; ++i)
+            for (var i = 0; i < criterias; ++i)
                 packet.ReadUInt32("Timer 1", i);
             packet.StoreEndList();
 
-            packet.StoreContinueList(achievements);
-            for (var i = 0; i < count2; ++i)
+            packet.StoreContinueList(achievementsList);
+            for (var i = 0; i < achievements; ++i)
                 packet.ReadUInt32("Achievement Id", i);
             packet.StoreEndList();
 
-            packet.StoreContinueList(criterias);
-            for (var i = 0; i < count1; ++i)
+            packet.StoreContinueList(criteriasList);
+            for (var i = 0; i < criterias; ++i)
                 packet.ReadUInt32("Criteria Id", i);
 
-            for (var i = 0; i < count1; ++i)
+            for (var i = 0; i < criterias; ++i)
                 packet.ReadUInt32("Timer 2", i);
             packet.StoreEndList();
         }

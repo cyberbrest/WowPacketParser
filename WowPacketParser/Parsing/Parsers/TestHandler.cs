@@ -113,6 +113,12 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("Unk4");
         }
 
+        [Parser(44964)] // 4.0.6a
+        public static void Handle44964(Packet packet)
+        {
+            packet.Store("HexDump", packet.ToHex());
+        }
+
         [Parser(Opcode.TEST_422_9838)]
         public static void Handle9838(Packet packet)
         {

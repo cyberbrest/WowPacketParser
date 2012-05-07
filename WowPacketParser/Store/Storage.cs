@@ -14,13 +14,11 @@ namespace WowPacketParser.Store
         public static readonly ConcurrentBag<SniffData> SniffData =
             new ConcurrentBag<SniffData>();
 
-
         /* Key: Guid */
 
         // Units, GameObjects, Players, Items
         public static readonly ConcurrentDictionary<Guid, WoWObject> Objects =
             new ConcurrentDictionary<Guid, WoWObject>();
-
 
         /* Key: Entry */
 
@@ -62,7 +60,6 @@ namespace WowPacketParser.Store
         public static readonly ConcurrentDictionary<Tuple<Race, Class>, StartPosition> StartPositions =
             new ConcurrentDictionary<Tuple<Race, Class>, StartPosition>();
 
-
         // Gossips (MenuId, TextId)
         public static readonly ConcurrentDictionary<Tuple<uint, uint>, Gossip> Gossips =
             new ConcurrentDictionary<Tuple<uint, uint>, Gossip>();
@@ -92,7 +89,7 @@ namespace WowPacketParser.Store
         {
             dict.AddOrUpdate(guid, playerInfo, (guid1, wowObject) => Player.UpdatePlayerInfo((Player)wowObject, playerInfo));
         }
-        
+
         // Maybe we should rename the above extension so this workaround isn't needed
         public static void AddOrUpdate<TKey, TValue>(this ConcurrentDictionary<TKey, TValue> dict, TKey key, TValue value)
         {
