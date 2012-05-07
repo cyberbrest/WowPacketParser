@@ -303,7 +303,7 @@ namespace WowPacketParser.Parsing.Parsers
             for (int i = 0; i < count; i++)
             {
                 packet.ReadPackedGuid("Hostile", i);
-                packet.ReadUInt32("Threat");
+                packet.ReadUInt32("Threat", i);
             }
             packet.StoreEndList();
         }

@@ -273,24 +273,24 @@ namespace WowPacketParser.Parsing.Parsers
                 {
                     if (type.HasAnyFlag(SpellHitType.SPELL_HIT_TYPE_UNK1))
                     {
-                        packet.ReadSingle("Unk float");
-                        packet.ReadSingle("Unk float");
+                        packet.ReadSingle("Unk float 1 1");
+                        packet.ReadSingle("Unk float 1 2");
                     }
 
                     if (type.HasAnyFlag(SpellHitType.SPELL_HIT_TYPE_UNK3))
                     {
-                        packet.ReadSingle("Unk float");
-                        packet.ReadSingle("Unk float");
+                        packet.ReadSingle("Unk float 3 1");
+                        packet.ReadSingle("Unk float 3 2");
                     }
 
                     if (type.HasAnyFlag(SpellHitType.SPELL_HIT_TYPE_UNK6))
                     {
-                        packet.ReadSingle("Unk float");
-                        packet.ReadSingle("Unk float");
-                        packet.ReadSingle("Unk float");
-                        packet.ReadSingle("Unk float");
-                        packet.ReadSingle("Unk float");
-                        packet.ReadSingle("Unk float");
+                        packet.ReadSingle("Unk float 6 1");
+                        packet.ReadSingle("Unk float 6 2");
+                        packet.ReadSingle("Unk float 6 3");
+                        packet.ReadSingle("Unk float 6 4");
+                        packet.ReadSingle("Unk float 6 5");
+                        packet.ReadSingle("Unk float 6 6");
                     }
                 }
             }
@@ -310,7 +310,6 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadUInt32("Absorb");
 
             packet.ReadBoolean("Critical");
-            packet.ReadBoolean("Debug output");
             if (packet.ReadBoolean("Debug output"))
             {
                 packet.ReadSingle("Unk float");
@@ -342,8 +341,8 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadEnum<SpellMissType>("Miss Info", TypeCode.Byte, i);
                 if (debug)
                 {
-                    packet.ReadSingle("Unk float", i);
-                    packet.ReadSingle("Unk float", i);
+                    packet.ReadSingle("Unk float 1", i);
+                    packet.ReadSingle("Unk float 2", i);
                 }
             }
             packet.StoreEndList();
