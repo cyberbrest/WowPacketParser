@@ -804,8 +804,7 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadEntryWithName<Int32>(StoreNameType.Quest, "Quest ID");
             var entry = packet.ReadEntry();
-            packet.WriteLine("Entry: " + 
-                StoreGetters.GetName(entry.Value ? StoreNameType.GameObject : StoreNameType.Unit, entry.Key));
+            packet.Store("Entry", new StoreEntry( entry.Value ? StoreNameType.GameObject : StoreNameType.Unit,  entry.Key));
             packet.ReadInt32("Count");
             packet.ReadInt32("Required Count");
             packet.ReadGuid("GUID");
