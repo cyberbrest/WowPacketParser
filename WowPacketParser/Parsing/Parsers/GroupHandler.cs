@@ -34,9 +34,10 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreBeginList("Members");
             for (var i = 0; i < numFields; i++)
             {
-                packet.ReadCString("Name", i);
-                packet.ReadGuid("GUID", i);
+                var name = packet.ReadCString("Name", i);
+                var guid = packet.ReadGuid("GUID", i);
                 packet.ReadEnum<GroupMemberStatusFlag>("Status", TypeCode.Byte, i);
+                StoreGetters.AddName(guid, name);
                 packet.ReadByte("Sub Group", i);
                 packet.ReadEnum<GroupUpdateFlag>("Update Flags", TypeCode.Byte, i);
 

@@ -14,7 +14,7 @@ namespace WowPacketParser.Loading
     public static class Reader
     {
         [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "reader is disposed in the finally block.")]
-        public static ICollection<Packet> Read(string fileName)
+        public static IEnumerable<Packet> Read(string fileName)
         {
             IPacketReader reader;
             switch (Settings.PacketFileType)

@@ -1,3 +1,4 @@
+using System.Globalization;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 
@@ -5,7 +6,7 @@ namespace WowPacketParser.Parsing.Parsers
 {
     public static class AddonHandler
     {
-        private static int _addonCount;
+        private static int _addonCount = -1;
 
         public static void ReadClientAddonsList(Packet packet, int size = -1)
         {
@@ -59,7 +60,15 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_ADDON_INFO)]
         public static void HandleServerAddonsList(Packet packet)
         {
+            if (_addonCount == -1)
+            {
+                packet.Store("Error", "CMSG_AUTH_SESSION was not received - thus cannot successfully parse this packet.");
+                packet.ReadToEnd();
+                return;
+            }
+
             packet.StoreBeginList("Addons");
+
             for (var i = 0; i < _addonCount; i++)
             {
                 packet.ReadByte("Addon State", i);

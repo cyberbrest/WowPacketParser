@@ -33,10 +33,11 @@ namespace WowPacketParser.Loading
             var direction = (string)element.Attribute("direction") == "C2S" ?
                 Direction.ClientToServer : Direction.ServerToClient;
             var data = Utilities.HexStringToBinary(element.Value);
+            var date = Convert.ToDateTime(element.Attribute("timestamp"));
 
             _canRead = _element.MoveNext();
 
-            return new Packet(data, opcode, DateTime.Now, direction, number, fileName);
+            return new Packet(data, opcode, date, direction, number, fileName);
         }
 
         public void Dispose()

@@ -53,18 +53,18 @@ namespace WowPacketParser.Misc
         {
             var minute = packedDate & 0x3F;
             var hour = (packedDate >> 6) & 0x1F;
-            // something = (packedDate >> 11) & 7;
+            // var weekDay = (packedDate >> 11) & 7;
             var day = (packedDate >> 14) & 0x3F;
             var month = (packedDate >> 20) & 0xF;
             var year = (packedDate >> 24) & 0x1F;
-            // something = (packedDate >> 29) & 3;
+            // var something2 = (packedDate >> 29) & 3; always 0
 
             return new DateTime(2000, 1, 1).AddYears(year).AddMonths(month).AddDays(day).AddHours(hour).AddMinutes(minute);
         }
 
         public static StoreNameType ObjectTypeToStore(ObjectType type)
         {
-            var result = StoreNameType.None;
+            StoreNameType result;
 
             switch (type)
             {
@@ -78,6 +78,9 @@ namespace WowPacketParser.Misc
                 case ObjectType.Container: // ?
                 case ObjectType.GameObject:
                     result = StoreNameType.GameObject;
+                    break;
+                default:
+                    result = StoreNameType.None;
                     break;
             }
 
@@ -114,25 +117,6 @@ namespace WowPacketParser.Misc
 
             Trace.WriteLine(String.Format("Memory GC: {0,5}{3}, Process: {1,5}{3} - {2}",
                 GC.GetTotalMemory(true) / bytes, process.PrivateMemorySize64 / bytes, prefix, bytesstr));
-        }
-
-        public static void SetUpListeners()
-        {
-            Trace.Listeners.Clear();
-
-            using (var consoleListener = new ConsoleTraceListener(true))
-                Trace.Listeners.Add(consoleListener);
-
-            if (Settings.ParsingLog)
-            {
-                using (var fileListener = new TextWriterTraceListener(String.Format("{0}_log.txt", Utilities.FormattedDateTimeForFiles())))
-                {
-                    fileListener.Name = "ConsoleMirror";
-                    Trace.Listeners.Add(fileListener);
-                }
-            }
-
-            Trace.AutoFlush = true;
         }
 
         public static void RemoveConfigOptions(ref List<string> files)
@@ -198,23 +182,24 @@ namespace WowPacketParser.Misc
         public static bool EqualValues(object o1, object o2)
         {
             if (o1 is float && o2 is float)
-            {
                 return Math.Abs((float)o1 - (float)o2) < 0.01;
-            }
 
             if (o1 is double && o2 is double)
-            {
                 return Math.Abs((double)o1 - (double)o2) < 0.001;
-            }
 
-            // TODO: Simplify this
+            if (o1 is float || o2 is double)
+                return false;
+
             // Notice that if one of the values is DBNull, DBNull == "" must return true
-            if (o1 is string && !(o2 is string))
-                return (string)o1 == Convert.ToString(o2);
-            if (!(o1 is string) && o2 is string)
-                return (string)o2 == Convert.ToString(o1);
-            if (o1 is string)
-                return o1.Equals(o2);
+            var str1 = o1 as string;
+            var str2 = o2 as string;
+
+            if (str1 != null && str2 == null)
+                return str1 == Convert.ToString(o2);
+            if (str1 == null && str2 != null)
+                return str2 == Convert.ToString(o1);
+            if (str1 != null)
+                return str1.Equals(o2);
 
             // this still works if objects are booleans or enums
             return Convert.ToInt64(o1) == Convert.ToInt64(o2);
@@ -237,7 +222,7 @@ namespace WowPacketParser.Misc
 
             foreach (var field in fi)
             {
-                var attrs = /*(TK[])*/field.GetCustomAttributes(typeof(TK), false);
+                var attrs = field.GetCustomAttributes(typeof(TK), false);
                 if (attrs.Length <= 0)
                     continue;
 
@@ -253,7 +238,7 @@ namespace WowPacketParser.Misc
         /// <returns></returns>
         public static string FormattedDateTimeForFiles()
         {
-            return DateTime.Now.ToString("yyy_MM_dd_HH_mm_ss");
+            return DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss");
         }
     }
 }

@@ -9,14 +9,9 @@ namespace WowPacketParser.Enums.Version
 {
     public static class UpdateFields
     {
-        private static readonly Assembly Assembly = Assembly.GetExecutingAssembly();
+        private static readonly Dictionary<Type, BiDictionary<string, int>> UpdateFieldDictionaries = LoadUFDictionaries();
 
-        private static readonly Dictionary<Type, BiDictionary<string, int>> UpdateFieldDictionaries =
-            new Dictionary<Type, BiDictionary<string, int>>();
-
-        public static readonly Dictionary<Type, int> UpdateFieldMaxOffsets = new Dictionary<Type, int>();
-
-        static UpdateFields()
+        private static Dictionary<Type, BiDictionary<string, int>> LoadUFDictionaries()
         {
             Type[] enumTypes = {
                                typeof (ObjectField), typeof (ItemField), typeof (ContainerField), typeof (UnitField),
@@ -24,10 +19,12 @@ namespace WowPacketParser.Enums.Version
                                typeof (CorpseField), typeof (AreaTriggerField)
                            };
 
+            var dicts = new Dictionary<Type, BiDictionary<string, int>>();
+
             foreach (var enumType in enumTypes)
             {
                 var vTypeString = string.Format("WowPacketParser.Enums.Version.{0}.{1}", GetUpdateFieldDictionaryBuildName(ClientVersion.Build), enumType.Name);
-                var vEnumType = Assembly.GetType(vTypeString);
+                var vEnumType = Assembly.GetExecutingAssembly().GetType(vTypeString);
                 if (vEnumType == null)
                     continue;   // versions prior to 4.3.0 do not have AreaTriggerField
 
@@ -39,20 +36,11 @@ namespace WowPacketParser.Enums.Version
                 for (var i = 0; i < vValues.Length; ++i)
                     result.Add(vNames[i], (int)vValues.GetValue(i));
 
-                UpdateFieldDictionaries.Add(enumType, result);
+                dicts.Add(enumType, result);
             }
-            
-            UpdateFieldMaxOffsets.Add(typeof(ObjectField), (int)GetUpdateFieldOffset(ObjectField.OBJECT_END));
-            UpdateFieldMaxOffsets.Add(typeof(ItemField), (int)GetUpdateFieldOffset(ItemField.ITEM_END));
-            UpdateFieldMaxOffsets.Add(typeof(ContainerField), (int)GetUpdateFieldOffset(ContainerField.CONTAINER_END));
-            UpdateFieldMaxOffsets.Add(typeof(UnitField), (int)GetUpdateFieldOffset(UnitField.UNIT_END));
-            UpdateFieldMaxOffsets.Add(typeof(PlayerField), (int)GetUpdateFieldOffset(PlayerField.PLAYER_END));
-            UpdateFieldMaxOffsets.Add(typeof(GameObjectField), (int)GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_END));
-            UpdateFieldMaxOffsets.Add(typeof(DynamicObjectField), (int)GetUpdateFieldOffset(DynamicObjectField.DYNAMICOBJECT_END));
-            UpdateFieldMaxOffsets.Add(typeof(CorpseField), (int)GetUpdateFieldOffset(CorpseField.CORPSE_END));
              
+            return dicts;
         }
-
         // returns update field offset by generic - crossversion enum
         public static int? GetUpdateFieldOffset<T>(T field)
         {
@@ -92,56 +80,49 @@ namespace WowPacketParser.Enums.Version
                     return typeof(ObjectField);
                 case ObjectType.Item:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max =  (int)GetUpdateFieldOffset(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(ItemField);
                     }
                 case ObjectType.Container:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ItemField), out max);
+                        int max = (int)GetUpdateFieldOffset(ItemField.ITEM_END);
                         if (offset < max)
                             goto case ObjectType.Item;
                         return typeof(ContainerField);
                     }
                 case ObjectType.Unit:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)GetUpdateFieldOffset(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(UnitField);
                     }
                 case ObjectType.Player:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(UnitField), out max);
+                        int max = (int)GetUpdateFieldOffset(UnitField.UNIT_END);
                         if (offset < max)
                             goto case ObjectType.Unit;
                         return typeof(PlayerField);
                     }
                 case ObjectType.GameObject:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)GetUpdateFieldOffset(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(GameObjectField);
                     }
                 case ObjectType.DynamicObject:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)GetUpdateFieldOffset(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(DynamicObjectField);
                     }
                 case ObjectType.Corpse:
                     {
-                        int max;
-                        Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out max);
+                        int max = (int)GetUpdateFieldOffset(ObjectField.OBJECT_END);
                         if (offset < max)
                             goto case ObjectType.Object;
                         return typeof(CorpseField);
@@ -224,7 +205,9 @@ namespace WowPacketParser.Enums.Version
                     return "V4_3_4_15595";
                 }
                 default:
+                {
                     return "V3_3_5a_12340";
+                }
             }
         }
     }

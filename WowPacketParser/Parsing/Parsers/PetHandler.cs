@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 using System.Text;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 using WowPacketParser.Store;
 using WowPacketParser.Store.Objects;
+using Guid = WowPacketParser.Misc.Guid;
 
 namespace WowPacketParser.Parsing.Parsers
 {
@@ -94,20 +97,33 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_PET_NAME_QUERY)]
         public static void HandlePetNameQuery(Packet packet)
         {
-            packet.ReadInt32("Pet number");
-            packet.ReadGuid("Guid");
+            var number = packet.ReadInt32("Pet number").ToString(CultureInfo.InvariantCulture);
+            var guid = packet.ReadGuid("Guid");
+
+            // Store temporary name (will be replaced in SMSG_PET_NAME_QUERY_RESPONSE)
+            if (StoreGetters.NameDict.ContainsValue(number))
+                return;
+
+            StoreGetters.AddName(guid, number);
         }
 
         [Parser(Opcode.SMSG_PET_NAME_QUERY_RESPONSE)]
         public static void HandlePetNameQueryResponse(Packet packet)
         {
-            packet.ReadInt32("Pet number");
+            var number = packet.ReadInt32("Pet number").ToString(CultureInfo.InvariantCulture);
 
             var petName = packet.ReadCString("Pet name");
             if (petName.Length == 0)
             {
                 packet.ReadBytes(7); // 0s
                 return;
+            }
+
+            var guidArray = (from pair in StoreGetters.NameDict where Equals(pair.Value, number) select pair.Key).ToList();
+            foreach (var guid in guidArray)
+            {
+                if (StoreGetters.NameDict.Remove(guid))
+                    StoreGetters.NameDict.Add(guid, petName);
             }
 
             packet.ReadTime("Time");

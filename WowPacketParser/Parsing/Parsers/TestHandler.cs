@@ -70,7 +70,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadInt32("Unk6", i);
 
             for (var i = 0; i < count; i++)
-                packet.ReadPackedTime("UnkTime", i);
+                packet.ReadPackedTime("Time", i);
             packet.StoreEndList();
         }
 

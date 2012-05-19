@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using System.Configuration;
 using System.Globalization;
 using WowPacketParser.Enums;
@@ -20,10 +19,7 @@ namespace WowPacketParser.Misc
         public static readonly int FilterPacketsNum = GetInt32("FilterPacketsNum", 0);
         public static readonly ClientVersionBuild ClientBuild = GetEnum("ClientBuild", ClientVersionBuild.Zero);
         public static readonly string PacketFileType = GetString("PacketFileType", string.Empty);
-        public static readonly int ThreadsRead = GetInt32("Threads.Read", 0);
-        public static readonly int ThreadsParse = GetInt32("Threads.Parse", 0);
         public static readonly DumpFormatType DumpFormat = GetEnum("DumpFormat", DumpFormatType.Text);
-        public static readonly StatsOutputFlags StatsOutput = GetEnum("StatsOutput", StatsOutputFlags.Local);
         public static readonly SQLOutputFlags SQLOutput = GetEnum("SQLOutput", SQLOutputFlags.None);
         public static readonly string SQLFileName = GetString("SQLFileName", string.Empty);
         public static readonly bool ShowEndPrompt = GetBoolean("ShowEndPrompt", false);
@@ -50,8 +46,8 @@ namespace WowPacketParser.Misc
 
         private static KeyValueConfigurationCollection GetConfiguration()
         {
-            string[] args = Environment.GetCommandLineArgs();
-            Dictionary<string, string> opts = new Dictionary<string, string>();
+            var args = Environment.GetCommandLineArgs();
+            var opts = new Dictionary<string, string>();
             string configFile = null;
             KeyValueConfigurationCollection settings = null;
             for (var i = 1; i < args.Length - 1; ++i)
@@ -81,14 +77,10 @@ namespace WowPacketParser.Misc
                 try
                 {
                     // Map the new configuration file.
-                    ExeConfigurationFileMap configFileMap =
-                        new ExeConfigurationFileMap();
-                    configFileMap.ExeConfigFilename = configPath;
+                    var configFileMap = new ExeConfigurationFileMap {ExeConfigFilename = configPath};
 
                     // Get the mapped configuration file
-                    System.Configuration.Configuration config =
-                       ConfigurationManager.OpenMappedExeConfiguration(
-                         configFileMap, ConfigurationUserLevel.None);
+                    var config = ConfigurationManager.OpenMappedExeConfiguration(configFileMap, ConfigurationUserLevel.None);
 
                     settings = ((AppSettingsSection)config.GetSection("appSettings")).Settings;
                 }
@@ -136,16 +128,6 @@ namespace WowPacketParser.Misc
             int aux;
             var s = SettingsCollection[key];
             if ((s == null || s.Value == null) || !int.TryParse(s.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out aux))
-                aux = defValue;
-
-            return aux;
-        }
-
-        public static float GetFloat(string key, float defValue)
-        {
-            float aux;
-            var s = SettingsCollection[key];
-            if ((s == null || s.Value == null) || !float.TryParse(s.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out aux))
                 aux = defValue;
 
             return aux;

@@ -36,6 +36,7 @@ namespace WowPacketParser.Loading
 
             var opcode = Convert.ToInt32(match.Groups["opcode"].Value, 16);
             var length = Convert.ToInt32(match.Groups["size"].Value, 10);
+            var time = Convert.ToDateTime(match.Groups["time"].Value);
             var direction = (match.Groups["stoc"].Value == "{CLIENT}" ?
                 Direction.ClientToServer : Direction.ServerToClient);
             var data = _reader.ReadLine();
@@ -45,7 +46,7 @@ namespace WowPacketParser.Loading
             for (var i = 0; i < length; i++)
                 arr[i] = byte.Parse(tokens[i], NumberStyles.HexNumber, null);
 
-            return new Packet(arr, opcode, DateTime.Now, direction, number, fileName);
+            return new Packet(arr, opcode, time, direction, number, fileName);
         }
         public void Dispose()
         {

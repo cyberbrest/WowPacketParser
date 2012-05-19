@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 
@@ -6,7 +7,7 @@ namespace WowPacketParser.Parsing.Parsers
 {
     public static class AccountDataHandler
     {
-        [Parser(Opcode.SMSG_ACCOUNT_DATA_TIMES)]
+        [Parser(Opcode.SMSG_ACCOUNT_DATA_TIMES, ClientVersionBuild.Zero, ClientVersionBuild.V3_0_2_9056)]
         public static void HandleAccountDataTimes(Packet packet)
         {
             packet.StoreBeginList("Unk block");

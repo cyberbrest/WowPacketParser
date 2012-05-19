@@ -430,7 +430,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadVector3("Position");
         }
 
-        [Parser(Opcode.SMSG_REMOVED_SPELL)]
+        [Parser(Opcode.SMSG_REMOVED_SPELL, ClientVersionBuild.Zero, ClientVersionBuild.V3_1_0_9767)]
         public static void HandleRemovedSpell(Packet packet)
         {
             packet.ReadEntryWithName<UInt16>(StoreNameType.Spell, "Spell ID");
@@ -561,7 +561,11 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadGuid("Caster GUID");
             packet.ReadGuid("Target GUID");
             packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell ID");
-            packet.ReadBoolean("Debug output");
+            if (packet.ReadBoolean("Debug output"))
+            {
+                packet.ReadSingle("Unk");
+                packet.ReadSingle("Unk");
+            }
         }
 
         [Parser(Opcode.MSG_CHANNEL_UPDATE)]
@@ -679,8 +683,8 @@ namespace WowPacketParser.Parsing.Parsers
             }
         }
 
-        [Parser(Opcode.SMSG_SET_FLAT_SPELL_MODIFIER)]
-        [Parser(Opcode.SMSG_SET_PCT_SPELL_MODIFIER)]
+        [Parser(Opcode.SMSG_SET_FLAT_SPELL_MODIFIER, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
+        [Parser(Opcode.SMSG_SET_PCT_SPELL_MODIFIER, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
         public static void HandleSetSpellModifier(Packet packet)
         {
             packet.ReadByte("Spell Mask bitpos");
@@ -688,8 +692,8 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("Amount");
         }
 
-        [Parser(Opcode.SMSG_SET_PCT_SPELL_MODIFIER, ClientVersionBuild.V4_0_6a_13623)]
-        [Parser(Opcode.SMSG_SET_FLAT_SPELL_MODIFIER, ClientVersionBuild.V4_0_6a_13623)]
+        [Parser(Opcode.SMSG_SET_PCT_SPELL_MODIFIER, ClientVersionBuild.V4_0_6_13596)]
+        [Parser(Opcode.SMSG_SET_FLAT_SPELL_MODIFIER, ClientVersionBuild.V4_0_6_13596)]
         public static void HandleSetSpellModifierFlat406(Packet packet)
         {
             var modCount = packet.ReadUInt32("Modifier type count");
@@ -792,7 +796,6 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_SPELL_CHANCE_PROC_LOG)]
         public static void HandleChanceProcLog(Packet packet)
         {
-            packet.Store("Hex dump", packet.ToHex());
             packet.ReadGuid("Caster GUID");
             packet.ReadGuid("Target GUID");
             packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell ID");

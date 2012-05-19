@@ -539,8 +539,6 @@ namespace WowPacketParser.Parsing.Parsers
             var counter = packet.ReadUInt32("List count");
             packet.ReadUInt32("Online count");
 
-            if (counter == 0)
-                return;
             packet.StoreBeginList("Players");
             for (var i = 0; i < counter; ++i)
             {

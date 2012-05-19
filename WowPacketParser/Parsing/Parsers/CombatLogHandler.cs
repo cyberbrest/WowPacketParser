@@ -75,7 +75,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadPackedGuid("Target GUID");
             packet.ReadPackedGuid("Caster GUID"); // Can be 0
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell"); // Can be 0
-            packet.ReadByte("Unknown Byte/Bool");
+            var debug = packet.ReadBoolean("Debug Output");
             var count = packet.ReadInt32("Count");
 
             packet.StoreBeginList("RemovedAuras");
@@ -85,6 +85,11 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("Unknown Byte/Bool", i);
             }
             packet.StoreEndList();
+            if (debug)
+            {
+                packet.ReadInt32("Unk int32");
+                packet.ReadInt32("Unk int32");
+            }
         }
 
         private static void ReadSpellLogExecute(ref Packet packet)

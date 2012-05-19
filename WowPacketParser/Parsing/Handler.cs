@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using WowPacketParser.Enums;
 using WowPacketParser.Enums.Version;
@@ -20,8 +18,10 @@ namespace WowPacketParser.Parsing
 
     public static class Handler
     {
-        static Handler()
+        private static Dictionary<int, Action<Packet>> LoadHandlers()
         {
+            var handlers = new Dictionary<int, Action<Packet>>(1000);
+
             var asm = Assembly.GetExecutingAssembly();
             var types = asm.GetTypes();
             foreach (var type in types)
@@ -64,33 +64,23 @@ namespace WowPacketParser.Parsing
 
                         var del = (Action<Packet>)Delegate.CreateDelegate(typeof(Action<Packet>), method);
 
-                        if (Handlers.ContainsKey(opc))
+                        if (handlers.ContainsKey(opc))
                         {
-                            Trace.WriteLine(string.Format("Error: (Build: {0}) tried to overwrite delegate for opcode {1} ({2}); new handler: {3}; old handler: {4}", ClientVersion.Build, opc, Opcodes.GetOpcodeName(opc), del.Method, Handlers[opc].Method));
+                            Trace.WriteLine(string.Format("Error: (Build: {0}) tried to overwrite delegate for opcode {1} ({2}); new handler: {3}; old handler: {4}",
+                                ClientVersion.Build, opc, Opcodes.GetOpcodeName(opc), del.Method, handlers[opc].Method));
                             continue;
                         }
 
-                        Handlers[opc] = del;
+                        handlers[opc] = del;
                     }
                 }
             }
+
+            return handlers;
         }
 
-        private static readonly Dictionary<int, Action<Packet>> Handlers =
-            new Dictionary<int, Action<Packet>>();
-
-        public static void WriteToFile(IEnumerable<Packet> packets, string file)
-        {
-            File.Delete(file);
-            using (var writer = new StreamWriter(file, true))
-            {
-                foreach (var packet in packets)
-                    writer.WriteLine(DumpAsText(packet));
-
-                writer.Flush();
-            }
-        }
-
+        private static readonly Dictionary<int, Action<Packet>> Handlers = LoadHandlers();
+        
         public static string DumpAsText(Packet packet)
         {
             StringBuilder output = new StringBuilder();

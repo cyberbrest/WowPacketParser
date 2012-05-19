@@ -164,6 +164,7 @@ namespace WowPacketParser.Misc
         {
             if (BaseStream != null)
                 BaseStream.Close();
+
             Dispose(true);
         }
     }

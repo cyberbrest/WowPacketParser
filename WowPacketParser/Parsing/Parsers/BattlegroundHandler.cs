@@ -669,7 +669,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("Team Winner");
 
             packet.StoreBeginList("Update flags list");
-            int tempCount = (int)count;
+            var tempCount = (int)count;
             do
             {
                 packet.ReadByte("Player Update Flags", tempCount);

@@ -821,7 +821,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
             {
                 packet.StoreBeginList("Questgivers");
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     packet.ReadGuid("GUID", i);
                     packet.ReadEnum<QuestGiverStatus4x>("Status", TypeCode.Int32, i);
@@ -831,7 +831,7 @@ namespace WowPacketParser.Parsing.Parsers
             else
             {
                 packet.StoreBeginList("Questgivers");
-                for (int i = 0; i < count; i++)
+                for (var i = 0; i < count; i++)
                 {
                     packet.ReadGuid("GUID", i);
                     packet.ReadEnum<QuestGiverStatus>("Status", TypeCode.Byte, i);

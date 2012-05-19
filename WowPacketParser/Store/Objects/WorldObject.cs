@@ -23,28 +23,25 @@ namespace WowPacketParser.Misc
             switch (type)
             {
                 case ObjectType.Object:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ObjectField), out FieldCount);
-                    break;
-                case ObjectType.Item:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ItemField), out FieldCount);
+                    FieldCount = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_END);
                     break;
                 case ObjectType.Container:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(ContainerField), out FieldCount);
+                    FieldCount = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(ContainerField.CONTAINER_END);
                     break;
                 case ObjectType.Corpse:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(CorpseField), out FieldCount);
+                    FieldCount = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(CorpseField.CORPSE_END);
                     break;
                 case ObjectType.DynamicObject:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(DynamicObjectField), out FieldCount);
+                    FieldCount = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(DynamicObjectField.DYNAMICOBJECT_END);
                     break;
                 case ObjectType.GameObject:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(GameObjectField), out FieldCount);
+                    FieldCount = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(GameObjectField.GAMEOBJECT_END);
                     break;
                 case ObjectType.Unit:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(UnitField), out FieldCount);
+                    FieldCount = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_END);
                     break;
                 case ObjectType.Player:
-                    Enums.Version.UpdateFields.UpdateFieldMaxOffsets.TryGetValue(typeof(PlayerField), out FieldCount);
+                    FieldCount = (int)Enums.Version.UpdateFields.GetUpdateFieldOffset(PlayerField.PLAYER_END);
                     break;
             }
             RawUpdateFields = new uint[FieldCount];
