@@ -9,7 +9,7 @@ namespace WowPacketParser.Enums.Version
 {
     public static class UpdateFields
     {
-        private static readonly Dictionary<Type, BiDictionary<string, int>> UpdateFieldDictionaries = LoadUFDictionaries();
+        private static Dictionary<Type, BiDictionary<string, int>> UpdateFieldDictionaries = null;
 
         private static Dictionary<Type, BiDictionary<string, int>> LoadUFDictionaries()
         {
@@ -41,6 +41,12 @@ namespace WowPacketParser.Enums.Version
              
             return dicts;
         }
+
+        public static void InitForClientVersion()
+        {
+            UpdateFieldDictionaries = LoadUFDictionaries();
+        }
+
         // returns update field offset by generic - crossversion enum
         public static int? GetUpdateFieldOffset<T>(T field)
         {

@@ -37,7 +37,7 @@ namespace WowPacketParser.Misc
             StoreObjects = new Stack<Tuple<NameDict, LinkedList<Tuple<NameDict, IndexDict>>>>();
             FileName = fileName;
             Status = ParsedStatus.None;
-            Parent = null;
+            SubPacket = false;
         }
 
         [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
@@ -56,7 +56,8 @@ namespace WowPacketParser.Misc
             StoreObjects = new Stack<Tuple<NameDict, LinkedList<Tuple<NameDict, IndexDict>>>>();
             FileName = parent.FileName;
             Status = ParsedStatus.None;
-            Parent = parent;
+            SubPacket = true;
+            ParentOpcode = parent.Opcode;
         }
 
         public int Opcode { get; private set; }
@@ -66,7 +67,8 @@ namespace WowPacketParser.Misc
         public string FileName { get; private set; }
         public ParsedStatus Status { get; set; }
         public string ErrorMessage = "";
-        public Packet Parent;
+        public bool SubPacket;
+        public int ParentOpcode;
 
         public NameDict GetData()
         {

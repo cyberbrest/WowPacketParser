@@ -59,7 +59,7 @@ namespace WowPacketParser
 
             var count = 0;
             foreach (var file in files)
-                new SniffFile(file, Tuple.Create(++count, files.Count), Settings.SQLOutput).ProcessFile();
+                new SniffFile(file, Tuple.Create(++count, files.Count)).Process();
 
             SQLConnector.Disconnect();
             SSHTunnel.Disconnect();
