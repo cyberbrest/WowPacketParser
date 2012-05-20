@@ -14,7 +14,7 @@ namespace WowPacketParser.Parsing.Parsers
             var grouptype = packet.ReadEnum<GroupTypeFlag>("Group Type", TypeCode.Byte);
             packet.ReadByte("Sub Group");
             packet.ReadEnum<GroupUpdateFlag>("Flags", TypeCode.Byte);
-            packet.ReadByte("Player's Role");
+            packet.ReadByte("Player Roles Assigned");
 
             if (grouptype.HasAnyFlag(GroupTypeFlag.LookingForDungeon))
             {
@@ -507,6 +507,20 @@ namespace WowPacketParser.Parsing.Parsers
         {
             if (ClientVersion.AddedInVersion(ClientType.Cataclysm))
                 packet.ReadBoolean("ToRaid");
+        }
+
+        [Parser(Opcode.CMSG_GROUP_SWAP_SUB_GROUP)]
+        public static void HandleGroupSwapSubGroup(Packet packet)
+        {
+            packet.ReadCString("Player 1 name");
+            packet.ReadCString("Player 2 name");
+        }
+
+        [Parser(Opcode.CMSG_GROUP_ASSISTANT_LEADER)]
+        public static void HandleGroupAssistantLeader(Packet packet)
+        {
+            packet.ReadGuid("GUID");
+            packet.ReadBoolean("Promote"); // False = demote
         }
     }
 }

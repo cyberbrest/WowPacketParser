@@ -62,7 +62,7 @@ namespace WowPacketParser.Parsing.Parsers
         {
             if (_addonCount == -1)
             {
-                packet.Store("Error", "CMSG_AUTH_SESSION was not received - thus cannot successfully parse this packet.");
+                packet.Store("Error", "CMSG_AUTH_SESSION was not received - cannot successfully parse this packet.");
                 packet.ReadToEnd();
                 return;
             }

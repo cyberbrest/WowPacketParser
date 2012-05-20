@@ -73,7 +73,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleLootReleaseResponse(Packet packet)
         {
             packet.ReadGuid("GUID");
-            packet.ReadBoolean("Unk Bool");
+            packet.ReadBoolean("Unk Bool"); // true calls CGUnit_C::UpdateLootAnimKit and CGameUI::CloseLoot
         }
 
         [Parser(Opcode.SMSG_LOOT_REMOVED)]
@@ -126,12 +126,12 @@ namespace WowPacketParser.Parsing.Parsers
                 if (Storage.Objects.TryGetValue(guid, out item))
                     if (item.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_ENTRY), out itemEntry))
                     {
-                        Storage.Loots.TryAdd(new Tuple<uint, ObjectType>(itemEntry.UInt32Value, guid.GetObjectType()), loot);
+                        Storage.Loots.Add(new Tuple<uint, ObjectType>(itemEntry.UInt32Value, guid.GetObjectType()), loot, packet.TimeSpan);
                         return;
                     }
             }
 
-            Storage.Loots.TryAdd(new Tuple<uint, ObjectType>(guid.GetEntry(), guid.GetObjectType()), loot);
+            Storage.Loots.Add(new Tuple<uint, ObjectType>(guid.GetEntry(), guid.GetObjectType()), loot, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_LOOT_ROLL)]
@@ -195,6 +195,16 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("Unk UInt32 1");
             packet.ReadInt32("Unk UInt32 2"); // only seen 0
             packet.ReadUInt32("Count");
+        }
+
+        [Parser(Opcode.SMSG_LOOT_MASTER_LIST)]
+        public static void HandleLootMasterList(Packet packet)
+        {
+            var count = packet.ReadByte("Count");
+            packet.StoreBeginList("LootMasterList");
+            for (var i = 0; i < count; i++)
+                packet.ReadGuid("GUID", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_LOOT_CLEAR_MONEY)]

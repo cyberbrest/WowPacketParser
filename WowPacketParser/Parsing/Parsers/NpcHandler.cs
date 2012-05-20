@@ -116,7 +116,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             npcTrainer.Title = packet.ReadCString("Title");
 
-            Storage.NpcTrainers.TryAdd(guid.GetEntry(), npcTrainer);
+            Storage.NpcTrainers.Add(guid.GetEntry(), npcTrainer, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_LIST_INVENTORY, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -149,7 +149,7 @@ namespace WowPacketParser.Parsing.Parsers
             }
             packet.StoreEndList();
 
-            Storage.NpcVendors.TryAdd(guid.GetEntry(), npcVendor);
+            Storage.NpcVendors.Add(guid.GetEntry(), npcVendor, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_LIST_INVENTORY, ClientVersionBuild.V4_2_2_14545)]
@@ -206,7 +206,7 @@ namespace WowPacketParser.Parsing.Parsers
             }
             packet.StoreEndList();
 
-            Storage.NpcVendors.TryAdd(guid.GetEntry(), npcVendor);
+            Storage.NpcVendors.Add(guid.GetEntry(), npcVendor, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_GOSSIP_HELLO)]
@@ -247,9 +247,9 @@ namespace WowPacketParser.Parsing.Parsers
             var menuId = packet.ReadUInt32("Menu Id");
             var textId = packet.ReadUInt32("Text Id");
 
-            if (Storage.Objects.ContainsKey(guid))
-                if (Storage.Objects[guid].Type == ObjectType.Unit)
-                    ((Unit) Storage.Objects[guid]).GossipId = menuId;
+            if (guid.GetObjectType() == ObjectType.Unit)
+                if (Storage.Objects.ContainsKey(guid))
+                        ((Unit) Storage.Objects[guid].Item1).GossipId = menuId;
 
             var count = packet.ReadUInt32("Amount of Options");
 
@@ -270,8 +270,8 @@ namespace WowPacketParser.Parsing.Parsers
                 gossip.GossipOptions.Add(gossipOption);
             }
             packet.StoreEndList();
+            Storage.Gossips.Add(Tuple.Create(menuId, textId), gossip, packet.TimeSpan);
 
-            Storage.Gossips.TryAdd(Tuple.Create(menuId, textId), gossip);
             packet.AddSniffData(StoreNameType.Gossip, (int)menuId, guid.GetEntry().ToString(CultureInfo.InvariantCulture));
 
             var questgossips = packet.ReadUInt32("Amount of Quest gossips");

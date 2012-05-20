@@ -394,7 +394,7 @@ namespace WowPacketParser.Parsing.Parsers
             }
         }
 
-        [Parser(Opcode.MSG_MOVE_HEARTBEAT, ClientVersionBuild.V4_2_2_14545)]
+        [Parser(Opcode.MSG_MOVE_HEARTBEAT, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_3_15354)] // upper bound is incorrect
         public static void HandleMovementHeartbeat422(Packet packet)
         {
             packet.ReadEnum<MovementFlag>("Movement flags", 30);
@@ -527,6 +527,139 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreBitstreamGuid("GUID", guidBytes);
         }
 
+        [Parser(Opcode.MSG_MOVE_HEARTBEAT, ClientVersionBuild.V4_3_3_15354)]
+        public static void HandleMovementHeartbeat433(Packet packet)
+        {
+            packet.ReadEnum<MovementFlag>("Movement flags", 30);
+
+            packet.ReadBit("HasSplineData");
+
+            var guidBytes = new byte[8];
+            guidBytes[0] = (byte)(packet.ReadBit() ? 1 : 0);
+            guidBytes[6] = (byte)(packet.ReadBit() ? 1 : 0);
+            guidBytes[1] = (byte)(packet.ReadBit() ? 1 : 0);
+            guidBytes[7] = (byte)(packet.ReadBit() ? 1 : 0);
+            guidBytes[2] = (byte)(packet.ReadBit() ? 1 : 0);
+            guidBytes[4] = (byte)(packet.ReadBit() ? 1 : 0);
+            guidBytes[3] = (byte)(packet.ReadBit() ? 1 : 0);
+
+            packet.ReadEnum<MovementFlagExtra>("Movement flags extra", 12);
+
+            guidBytes[5] = (byte)(packet.ReadBit() ? 1 : 0);
+            var splineElevation = packet.ReadBit("SplineElevation"); // OR Swimming
+            var onTransport = packet.ReadBit("OnTransport");
+
+            var transportBytes = new byte[8];
+            var hasInterpolatedMovement = false;
+            var time3 = false;
+            if (onTransport)
+            {
+                transportBytes[0] = (byte)(packet.ReadBit() ? 1 : 0);
+                transportBytes[6] = (byte)(packet.ReadBit() ? 1 : 0);
+                transportBytes[2] = (byte)(packet.ReadBit() ? 1 : 0);
+                transportBytes[5] = (byte)(packet.ReadBit() ? 1 : 0);
+                transportBytes[4] = (byte)(packet.ReadBit() ? 1 : 0);
+                transportBytes[1] = (byte)(packet.ReadBit() ? 1 : 0);
+                transportBytes[3] = (byte)(packet.ReadBit() ? 1 : 0);
+                transportBytes[7] = (byte)(packet.ReadBit() ? 1 : 0);
+                hasInterpolatedMovement = packet.ReadBit("HasInterpolatedMovement");
+                time3 = packet.ReadBit("Time3");
+            }
+
+            var swimming = packet.ReadBit("Swimming");  // OR SplineElevation
+            var interPolatedTurning = packet.ReadBit("InterPolatedTurning");
+            var jumping = false;
+            if (interPolatedTurning)
+                jumping = packet.ReadBit("Jumping");
+
+            packet.ReadInt32("Time");
+            packet.ReadVector4("Position");
+
+            if (guidBytes[7] != 0)
+                guidBytes[7] ^= packet.ReadByte();
+
+            if (guidBytes[5] != 0)
+                guidBytes[5] ^= packet.ReadByte();
+
+            if (splineElevation)
+                packet.ReadSingle("Spline Elevation");
+
+            if (guidBytes[1] != 0)
+                guidBytes[1] ^= packet.ReadByte();
+
+            if (guidBytes[6] != 0)
+                guidBytes[6] ^= packet.ReadByte();
+
+            if (guidBytes[4] != 0)
+                guidBytes[4] ^= packet.ReadByte();
+
+            if (guidBytes[3] != 0)
+                guidBytes[3] ^= packet.ReadByte();
+
+            if (onTransport)
+            {
+                packet.ReadByte("Transport Seat");
+                packet.ReadSingle("Transport Orientation");
+                packet.ReadVector3("Transport Position");
+                packet.ReadInt32("Transport Time");
+                if (hasInterpolatedMovement)
+                    packet.ReadInt32("Transport Time 2");
+
+                if (transportBytes[3] != 0)
+                    transportBytes[3] ^= packet.ReadByte();
+
+                if (transportBytes[6] != 0)
+                    transportBytes[6] ^= packet.ReadByte();
+
+                if (time3)
+                    packet.ReadInt32("Transport Time 3");
+
+                if (transportBytes[7] != 0)
+                    transportBytes[7] ^= packet.ReadByte();
+
+                if (transportBytes[5] != 0)
+                    transportBytes[5] ^= packet.ReadByte();
+
+                if (transportBytes[2] != 0)
+                    transportBytes[2] ^= packet.ReadByte();
+
+                if (transportBytes[1] != 0)
+                    transportBytes[1] ^= packet.ReadByte();
+
+                if (transportBytes[0] != 0)
+                    transportBytes[0] ^= packet.ReadByte();
+
+                if (transportBytes[4] != 0)
+                    transportBytes[4] ^= packet.ReadByte();
+
+                packet.StoreBitstreamGuid("Transport GUID", transportBytes);
+            }
+
+            if (swimming)
+                packet.ReadSingle("Swim Pitch");
+
+            if (interPolatedTurning)
+            {
+                packet.ReadInt32("Time Fallen");
+                packet.ReadSingle("Fall Start Velocity");
+                if (jumping)
+                {
+                    packet.ReadSingle("Jump Velocity");
+                    packet.ReadSingle("Jump Cos");
+                    packet.ReadSingle("Jump Sin");
+
+                }
+            }
+
+            if (guidBytes[2] != 0)
+                guidBytes[2] ^= packet.ReadByte();
+
+            if (guidBytes[0] != 0)
+                guidBytes[0] ^= packet.ReadByte();
+
+            packet.StoreBitstreamGuid("GUID", guidBytes);
+        }
+        
         [Parser(Opcode.MSG_MOVE_SET_PITCH, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleMovementSetPitch422(Packet packet)
         {
@@ -958,17 +1091,21 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_MOVE_KNOCK_BACK_ACK)]
         [Parser(Opcode.CMSG_MOVE_WATER_WALK_ACK)]
         [Parser(Opcode.CMSG_MOVE_HOVER_ACK)]
+        [Parser(Opcode.CMSG_MOVE_SET_CAN_FLY_ACK)]
+        [Parser(Opcode.CMSG_MOVE_SET_CAN_TRANSITION_BETWEEN_SWIM_AND_FLY_ACK)]
+        [Parser(Opcode.CMSG_FORCE_MOVE_UNROOT_ACK)]
+        [Parser(Opcode.CMSG_FORCE_MOVE_ROOT_ACK)]
         public static void HandleSpecialMoveAckMessages(Packet packet)
         {
             var guid = packet.ReadPackedGuid("Guid");
-            packet.ReadInt32("Unk Int32 1");
+            packet.ReadInt32("Movement Counter");
 
             ReadMovementInfo(ref packet, guid);
 
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.CMSG_MOVE_KNOCK_BACK_ACK))
                 return;
 
-            packet.ReadInt32("Unk Int32 2");
+            packet.ReadSingle("Unk float");
         }
 
         [Parser(Opcode.SMSG_SET_PHASE_SHIFT)]

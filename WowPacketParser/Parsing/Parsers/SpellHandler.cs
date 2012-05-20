@@ -101,7 +101,7 @@ namespace WowPacketParser.Parsing.Parsers
             startSpell.Spells = spells;
 
             if (SessionHandler.LoggedInCharacter != null && SessionHandler.LoggedInCharacter.FirstLogin)
-                Storage.StartSpells.TryAdd(new Tuple<Race, Class>(SessionHandler.LoggedInCharacter.Race, SessionHandler.LoggedInCharacter.Class), startSpell);
+                Storage.StartSpells.Add(new Tuple<Race, Class>(SessionHandler.LoggedInCharacter.Race, SessionHandler.LoggedInCharacter.Class), startSpell, packet.TimeSpan);
 
             var cooldownCount = packet.ReadInt16("Cooldown Count");
             packet.StoreBeginList("Cooldowns");
@@ -199,7 +199,7 @@ namespace WowPacketParser.Parsing.Parsers
             // This only works if the parser saw UPDATE_OBJECT before this packet
             if (Storage.Objects.ContainsKey(guid))
             {
-                var unit = Storage.Objects[guid] as Unit;
+                var unit = Storage.Objects[guid].Item1 as Unit;
                 if (unit != null)
                 {
                     // If this is the first packet that sends auras

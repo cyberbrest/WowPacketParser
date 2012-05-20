@@ -7,7 +7,6 @@ using WowPacketParser.Enums;
 using WowPacketParser.Misc;
 using WowPacketParser.Store;
 using WowPacketParser.Store.Objects;
-using Guid = WowPacketParser.Misc.Guid;
 
 namespace WowPacketParser.Parsing.Parsers
 {
@@ -60,7 +59,7 @@ namespace WowPacketParser.Parsing.Parsers
             {
                 SpellsX spellsCr;
                 spellsCr.Spells = spells.ToArray();
-                Storage.SpellsX.TryAdd(guid.GetEntry(), spellsCr);
+                Storage.SpellsX.Add(guid.GetEntry(), spellsCr, packet.TimeSpan);
             }
 
             var spellCount = packet.ReadByte("Spell Count"); // vehicles -> 0, pets -> != 0. Could this be auras?
@@ -101,9 +100,6 @@ namespace WowPacketParser.Parsing.Parsers
             var guid = packet.ReadGuid("Guid");
 
             // Store temporary name (will be replaced in SMSG_PET_NAME_QUERY_RESPONSE)
-            if (StoreGetters.NameDict.ContainsValue(number))
-                return;
-
             StoreGetters.AddName(guid, number);
         }
 
@@ -121,10 +117,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             var guidArray = (from pair in StoreGetters.NameDict where Equals(pair.Value, number) select pair.Key).ToList();
             foreach (var guid in guidArray)
-            {
-                if (StoreGetters.NameDict.Remove(guid))
-                    StoreGetters.NameDict.Add(guid, petName);
-            }
+                StoreGetters.NameDict[guid] = petName;
 
             packet.ReadTime("Time");
             var declined = packet.ReadBoolean("Declined");

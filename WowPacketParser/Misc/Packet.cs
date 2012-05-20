@@ -21,6 +21,8 @@ namespace WowPacketParser.Misc
         private static readonly bool SniffData = Settings.SQLOutput.HasAnyFlag(SQLOutputFlags.SniffData);
         private static readonly bool SniffDataOpcodes = Settings.SQLOutput.HasAnyFlag(SQLOutputFlags.SniffDataOpcodes);
 
+        private static DateTime _firstPacketTime;
+
         [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
         public Packet(byte[] input, int opcode, DateTime time, Direction direction, int number, string fileName)
             : base(new MemoryStream(input.Length), Encoding.UTF8)
@@ -38,6 +40,11 @@ namespace WowPacketParser.Misc
             FileName = fileName;
             Status = ParsedStatus.None;
             SubPacket = false;
+
+            if (number == 0)
+                _firstPacketTime = Time;
+
+            TimeSpan = Time - _firstPacketTime;
         }
 
         [SuppressMessage("Microsoft.Reliability", "CA2000", Justification = "MemoryStream is disposed in ClosePacket().")]
@@ -58,10 +65,16 @@ namespace WowPacketParser.Misc
             Status = ParsedStatus.None;
             SubPacket = true;
             ParentOpcode = parent.Opcode;
+
+            if (Number == 0)
+                _firstPacketTime = Time;
+
+            TimeSpan = Time - _firstPacketTime;
         }
 
         public int Opcode { get; private set; }
         public DateTime Time { get; private set; }
+        public TimeSpan TimeSpan { get; private set; }
         public Direction Direction { get; private set; }
         public int Number { get; private set; }
         public string FileName { get; private set; }
@@ -99,7 +112,7 @@ namespace WowPacketParser.Misc
                 Number = Number,
             };
 
-           Storage.SniffData.Add(item);
+            Storage.SniffData.Add(item, TimeSpan);
         }
 
         public void Inflate(int inflatedSize, int bytesToInflate)

@@ -355,7 +355,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             packet.AddSniffData(StoreNameType.Quest, id.Key, "QUERY_RESPONSE");
 
-            Storage.QuestTemplates.TryAdd((uint) id.Key, quest);
+            Storage.QuestTemplates.Add((uint) id.Key, quest, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_QUEST_POI_QUERY)]
@@ -448,7 +448,7 @@ namespace WowPacketParser.Parsing.Parsers
                     }
                     packet.StoreEndList();
 
-                    Storage.QuestPOIs.TryAdd(new Tuple<uint, uint>((uint) questId, (uint) idx), questPoi);
+                    Storage.QuestPOIs.Add(new Tuple<uint, uint>((uint) questId, (uint) idx), questPoi, packet.TimeSpan);
                 }
                 packet.StoreEndList();
             }
@@ -710,7 +710,7 @@ namespace WowPacketParser.Parsing.Parsers
             else
                 packet.ReadBoolean("Auto Finish", TypeCode.Int32);
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_3_11685))
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_0_10958))
                 packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
 
             packet.ReadUInt32("Suggested Players");
