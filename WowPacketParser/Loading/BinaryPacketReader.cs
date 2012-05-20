@@ -87,9 +87,7 @@ namespace WowPacketParser.Loading
                     _reader.ReadBytes(additionalLength);
                     break;
                 default:
-                    // not supported version - let's assume the PKT bytes were a coincidence
-                    _reader.BaseStream.Position = 0;
-                    break;
+                    throw new Exception("not a pkt file!");
             }
         }
 
@@ -159,12 +157,7 @@ namespace WowPacketParser.Loading
                         data = _reader.ReadBytes(length - 4);
                         break;
                     default:
-                        opcode = _reader.ReadUInt16();
-                        length = _reader.ReadInt32();
-                        direction = (Direction)_reader.ReadByte();
-                        time = Utilities.GetDateTimeFromUnixTime(_reader.ReadInt64());
-                        data = _reader.ReadBytes(length);
-                        break;
+                        throw new Exception("Incorrect pkt version");
                 }
             }
 
