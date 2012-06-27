@@ -102,10 +102,34 @@ namespace WowPacketParser.Parsing.Parsers
             obj.Area = WorldStateHandler.CurrentAreaId;
             obj.PhaseMask = (uint) MovementHandler.CurrentPhaseMask;
 
-            Storage.Objects.Add(guid, obj, packet.TimeSpan);
+            // If this is the second time we see the same object (same guid,
+            // same position) update its phasemask
+            if (Storage.Objects.ContainsKey(guid))
+            {
+                var existObj = Storage.Objects[guid].Item1;
+                ProcessExistingObject(ref existObj, obj, guid); // can't do "ref Storage.Objects[guid].Item1 directly
+            }
+            else
+                Storage.Objects.Add(guid, obj, packet.TimeSpan);
 
             if (guid.HasEntry() && (objType == ObjectType.Unit || objType == ObjectType.GameObject))
                 packet.AddSniffData(Utilities.ObjectTypeToStore(objType), (int)guid.GetEntry(), "SPAWN");
+        }
+
+        private static void ProcessExistingObject(ref WoWObject obj, WoWObject newObj, Guid guid)
+        {
+            obj.PhaseMask |= newObj.PhaseMask;
+            if (guid.GetHighType() == HighGuidType.Unit) // skip if not an unit
+            {
+                if (!obj.Movement.HasWpsOrRandMov)
+                    if (obj.Movement.Position != newObj.Movement.Position)
+                    {
+                        UpdateField uf;
+                        if (obj.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(UnitField.UNIT_FIELD_FLAGS), out uf))
+                            if ((uf.UInt32Value & (uint) UnitFlags.IsInCombat) == 0) // movement could be because of aggro so ignore that
+                                obj.Movement.HasWpsOrRandMov = true;
+                    }
+            }
         }
 
         private static void ReadObjectsBlock(ref Packet packet, int index)
@@ -446,7 +470,9 @@ namespace WowPacketParser.Parsing.Parsers
                     if (transportGuid[6] != 0) transportGuid[6] ^= packet.ReadByte();
                     if (transportGuid[2] != 0) transportGuid[2] ^= packet.ReadByte();
                     if (transportGuid[4] != 0) transportGuid[4] ^= packet.ReadByte();
+                    packet.StoreBitstreamGuid("Transport GUID", transportGuid, index);
                     packet.Store("Transport Position", transPos, index);
+
                 }
 
                 moveInfo.Position.X = packet.ReadSingle();
@@ -515,8 +541,8 @@ namespace WowPacketParser.Parsing.Parsers
                 if (hasGOTransportTime2)
                     packet.ReadUInt32("GO Transport Time 2", index);
 
-                packet.Store("GO Transport Position", tPos, index);
                 packet.StoreBitstreamGuid("GO Transport GUID", goTransportGuid, index);
+                packet.Store("GO Transport Position", tPos, index);
             }
 
             if (hasGameObjectRotation)
@@ -1823,16 +1849,16 @@ namespace WowPacketParser.Parsing.Parsers
 
         private static MovementInfo ReadMovementUpdateBlock(ref Packet packet, Guid guid, int index)
         {
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
+            if (ClientVersion.Build == ClientVersionBuild.V4_3_4_15595)
                 return ReadMovementUpdateBlock434(ref packet, guid, index);
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_3_15354))
+            if (ClientVersion.Build == ClientVersionBuild.V4_3_3_15354)
                 return ReadMovementUpdateBlock433(ref packet, guid, index);
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_2_15211))
+            if (ClientVersion.Build == ClientVersionBuild.V4_3_2_15211)
                 return ReadMovementUpdateBlock432(ref packet, guid, index);
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
+            if (ClientVersion.Build == ClientVersionBuild.V4_3_0_15005)
                 return ReadMovementUpdateBlock430(ref packet, guid, index);
 
             var moveInfo = new MovementInfo();
@@ -1988,14 +2014,6 @@ namespace WowPacketParser.Parsing.Parsers
                         packet.ReadInt32("Unk Int32", index, count);
                     packet.StoreEndList();
                 }
-            }
-
-            // Initialize fields that are not used by GOs
-            if (guid.GetObjectType() == ObjectType.GameObject)
-            {
-                moveInfo.VehicleId = 0;
-                moveInfo.WalkSpeed = 0;
-                moveInfo.RunSpeed = 0;
             }
 
             return moveInfo;

@@ -34,7 +34,6 @@ namespace WowPacketParser
             }
 
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
-            ClientVersion.SetVersion(Settings.ClientBuild);
 
             if (Settings.ReaderFilterPacketNumLow < 0)
                 throw new ConstraintException("FilterPacketNumLow must be positive");

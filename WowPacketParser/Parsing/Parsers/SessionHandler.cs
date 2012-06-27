@@ -14,7 +14,7 @@ namespace WowPacketParser.Parsing.Parsers
 
         public static Player LoggedInCharacter;
 
-        [Parser(Opcode.SMSG_AUTH_CHALLENGE)]
+        [Parser(Opcode.SMSG_AUTH_CHALLENGE, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleServerAuthChallenge(Packet packet)
         {
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_2_0_10192))
@@ -46,7 +46,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("Unk8");
         }
 
-        [Parser(Opcode.CMSG_AUTH_SESSION)]
+        [Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleAuthSession(Packet packet)
         {
             // Do not overwrite version after Handler was initialized
@@ -58,7 +58,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_0_2_9056))
                 packet.ReadInt32("Unk Int32 2");
 
-            packet.ReadInt32("Client Seed");
+            packet.ReadUInt32("Client Seed");
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_5a_12340))
             {
@@ -77,7 +77,7 @@ namespace WowPacketParser.Parsing.Parsers
         }
 
         //[Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.V4_2_0_14333)]
-        [Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.V4_2_2_14545)]
+        [Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
         public static void HandleAuthSession422(Packet packet)
         {
             packet.ReadByte("Byte 1");
@@ -122,7 +122,7 @@ namespace WowPacketParser.Parsing.Parsers
             AddonHandler.ReadClientAddonsList(packet);
         }
 
-        [Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.V4_3_0_15005)]
+        [Parser(Opcode.CMSG_AUTH_SESSION, ClientVersionBuild.V4_3_0_15005, ClientVersionBuild.V4_3_2_15211)]
         public static void HandleAuthSession430(Packet packet)
         {
             packet.ReadInt32("Int32 1");
@@ -237,7 +237,7 @@ namespace WowPacketParser.Parsing.Parsers
                 }
             }
         }
-        
+
         [Parser(Opcode.SMSG_AUTH_RESPONSE, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleAuthResponse434(Packet packet)
         {
@@ -249,7 +249,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("Unk Byte");
                 packet.ReadInt32("Queue Position");
             }
-            if (hasAccountInfo) 
+            if (hasAccountInfo)
             {
                 packet.ReadInt32("Billing Time Remaining");
                 packet.ReadEnum<ClientType>("Account Expansion", TypeCode.Byte);
@@ -278,8 +278,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void ReadQueuePositionInfo(ref Packet packet)
         {
             packet.ReadInt32("Queue Position");
-
-            packet.ReadByte("Unk Byte");
+            packet.ReadBoolean("Realm Has Free Character Migration");
         }
 
         [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -328,7 +327,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
         }
-        
+
         [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V4_3_3_15354, ClientVersionBuild.V4_3_4_15595)]
         public static void HandlePlayerLogin433(Packet packet)
         {
@@ -392,7 +391,7 @@ namespace WowPacketParser.Parsing.Parsers
             LoggedInCharacter = null;
         }
 
-        [Parser(Opcode.SMSG_REDIRECT_CLIENT)]
+        [Parser(Opcode.SMSG_REDIRECT_CLIENT, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleRedirectClient(Packet packet)
         {
             var ip = packet.ReadIPAddress();
@@ -419,7 +418,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("Token");
         }
 
-        [Parser(Opcode.CMSG_REDIRECTION_AUTH_PROOF)]
+        [Parser(Opcode.CMSG_REDIRECTION_AUTH_PROOF, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleRedirectionAuthProof(Packet packet)
         {
             packet.ReadCString("Account");

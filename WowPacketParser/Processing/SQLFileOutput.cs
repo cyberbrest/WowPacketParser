@@ -14,10 +14,12 @@ namespace WowPacketParser.Processing
     {
         string FileName;
         string LogPrefix;
+        string Header;
         public bool Init(SniffFile file)
         {
             FileName = file.FileName;
             LogPrefix = file.LogPrefix;
+            Header = file.GetHeader();
             return Settings.SQLOutput != SQLOutputFlags.None;
         }
         public void ProcessPacket(Packet packet)
@@ -32,7 +34,7 @@ namespace WowPacketParser.Processing
             else
                 sqlFileName = Settings.SQLFileName;
 
-            Builder.DumpSQL(string.Format("{0}: Dumping sql", LogPrefix), sqlFileName, Settings.SQLOutput);
+            Builder.DumpSQL(string.Format("{0}: Dumping sql", LogPrefix), sqlFileName, Header);
         }
         public void ProcessData(string name, Object obj, Type t) { }
     }

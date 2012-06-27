@@ -106,7 +106,7 @@ namespace WowPacketParser.Parsing.Parsers
                 return;
 
             packet.ReadSingle("Elevation");
-            packet.ReadSingle("Missile speed?");
+            packet.ReadSingle("Missile speed");
 
             // Boolean if it will send MSG_MOVE_STOP
             if (!packet.ReadBoolean())
@@ -724,7 +724,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
         }
 
-        [Parser(Opcode.SMSG_ITEM_REFUND_RESULT)]
+        [Parser(Opcode.SMSG_ITEM_REFUND_RESULT, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleItemRefundResult(Packet packet)
         {
             packet.ReadGuid("Item Guid");

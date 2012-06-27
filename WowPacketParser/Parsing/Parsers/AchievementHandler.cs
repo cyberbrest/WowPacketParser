@@ -1,5 +1,7 @@
+using System;
 using WowPacketParser.Enums;
 using WowPacketParser.Misc;
+using Guid = WowPacketParser.Misc.Guid;
 
 namespace WowPacketParser.Parsing.Parsers
 {
@@ -37,7 +39,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadInt32("Criteria ID");
             packet.ReadPackedGuid("Criteria Counter");
             packet.ReadPackedGuid("Player GUID");
-            packet.ReadInt32("Unk Int32");
+            packet.ReadInt32("Unk Int32"); // some flag... & 1 -> delete
             packet.ReadPackedTime("Time");
 
             packet.StoreBeginList("Timers");
@@ -80,7 +82,7 @@ namespace WowPacketParser.Parsing.Parsers
 
                 packet.ReadPackedGuid("Player GUID", i);
 
-                packet.ReadInt32("Unk Int32", i);
+                packet.ReadInt32("Unk Int32", i); // Unk flag, same as in SMSG_CRITERIA_UPDATE
 
                 packet.ReadPackedTime("Criteria Time", i);
 
@@ -93,13 +95,13 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreEndList();
         }
 
-        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA)]
+        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6a_13623)]
         public static void HandleAllAchievementData(Packet packet)
         {
             ReadAllAchievementData(ref packet);
         }
 
-        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_0_6a_13623)]
+        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_0_6a_13623, ClientVersionBuild.V4_1_0_13914)]
         public static void HandleAllAchievementData406(Packet packet)
         {
             var achievements = packet.ReadUInt32("Achievement count");
@@ -167,8 +169,10 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_COMPRESSED_ACHIEVEMENT_DATA)]
         public static void HandleCompressedAllAchievementData(Packet packet)
         {
-            packet.Inflate(packet.ReadInt32());
-                if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
+                packet.Inflate(packet.ReadInt32());
+                if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
+                    HandleAllAchievementData434(packet);
+                else if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
                     HandleAllAchievementData422(packet);
                 else if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
                     HandleAllAchievementData406(packet);
@@ -176,7 +180,7 @@ namespace WowPacketParser.Parsing.Parsers
                     HandleAllAchievementData(packet);
         }
 
-        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_2_2_14545)]
+        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
         public static void HandleAllAchievementData422(Packet packet)
         {
             var criterias = packet.ReadUInt32("Criterias Count");
@@ -216,6 +220,84 @@ namespace WowPacketParser.Parsing.Parsers
 
             for (var i = 0; i < criterias; ++i)
                 packet.ReadUInt32("Timer 2", i);
+            packet.StoreEndList();
+        }
+
+        [Parser(Opcode.SMSG_ALL_ACHIEVEMENT_DATA, ClientVersionBuild.V4_3_4_15595)]
+        public static void HandleAllAchievementData434(Packet packet)
+        {
+            var criterias = packet.ReadBits("Criteria count", 21);
+            var counter = new byte[criterias][];
+            var guid = new byte[criterias][];
+            var flags = new byte[criterias];
+            var criteriasList = packet.StoreBeginList("Criterias");
+            for (var i = 0; i < criterias; ++i)
+            {
+                counter[i] = new byte[8];
+                guid[i] = new byte[8];
+
+                guid[i][4] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][3] = (byte)(packet.ReadBit() ? 1 : 0);
+                guid[i][5] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][0] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][6] = (byte)(packet.ReadBit() ? 1 : 0);
+                guid[i][3] = (byte)(packet.ReadBit() ? 1 : 0);
+                guid[i][0] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][4] = (byte)(packet.ReadBit() ? 1 : 0);
+                guid[i][2] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][7] = (byte)(packet.ReadBit() ? 1 : 0);
+                guid[i][7] = (byte)(packet.ReadBit() ? 1 : 0);
+                flags[i] = (byte)(packet.ReadBits(2) & 0xFFu);
+                guid[i][6] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][2] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][1] = (byte)(packet.ReadBit() ? 1 : 0);
+                counter[i][5] = (byte)(packet.ReadBit() ? 1 : 0);
+                guid[i][1] = (byte)(packet.ReadBit() ? 1 : 0);
+            }
+            packet.StoreEndList();
+
+            var achievements = packet.ReadBits("Achievement count", 23);
+            packet.StoreContinueList(criteriasList);
+            for (var i = 0; i < criterias; ++i)
+            {
+                if (guid[i][3] != 0) guid[i][3] ^= packet.ReadByte();
+                if (counter[i][5] != 0) counter[i][5] ^= packet.ReadByte();
+                if (counter[i][6] != 0) counter[i][6] ^= packet.ReadByte();
+                if (guid[i][4] != 0) guid[i][4] ^= packet.ReadByte();
+                if (guid[i][6] != 0) guid[i][6] ^= packet.ReadByte();
+                if (counter[i][2] != 0) counter[i][2] ^= packet.ReadByte();
+
+                packet.ReadUInt32("Criteria Timer 2", i);
+
+                if (guid[i][2] != 0) guid[i][2] ^= packet.ReadByte();
+
+                packet.ReadUInt32("Criteria Id", i);
+
+                if (guid[i][5] != 0) guid[i][5] ^= packet.ReadByte();
+                if (counter[i][0] != 0) counter[i][0] ^= packet.ReadByte();
+                if (counter[i][3] != 0) counter[i][3] ^= packet.ReadByte();
+                if (counter[i][1] != 0) counter[i][1] ^= packet.ReadByte();
+                if (counter[i][4] != 0) counter[i][4] ^= packet.ReadByte();
+                if (guid[i][0] != 0) guid[i][0] ^= packet.ReadByte();
+                if (guid[i][7] != 0) guid[i][7] ^= packet.ReadByte();
+                if (counter[i][7] != 0) counter[i][7] ^= packet.ReadByte();
+
+                packet.ReadUInt32("Criteria Timer 1", i);
+                packet.ReadPackedTime("Criteria Date", i);
+
+                if (guid[i][1] != 0) guid[i][1] ^= packet.ReadByte();
+
+                packet.Store("Criteria Flags", flags[i]);
+                packet.Store("Criteria Counter", BitConverter.ToUInt64(counter[i], 0), i);
+                packet.StoreBitstreamGuid("Criteria GUID", guid[i], i);
+            }
+
+            var achievementsList = packet.StoreBeginList("Achievements");
+            for (var i = 0; i < achievements; ++i)
+            {
+                packet.ReadUInt32("Achievement Id", i);
+                packet.ReadPackedTime("Achievement Date", i);
+            }
             packet.StoreEndList();
         }
     }

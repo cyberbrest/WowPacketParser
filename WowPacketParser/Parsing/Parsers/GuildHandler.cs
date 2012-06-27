@@ -19,7 +19,7 @@ namespace WowPacketParser.Parsing.Parsers
         }
 
         [Parser(Opcode.CMSG_GUILD_ROSTER, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
-        [Parser(Opcode.CMSG_GUILD_ACCEPT)]
+        [Parser(Opcode.CMSG_GUILD_ACCEPT, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
         [Parser(Opcode.CMSG_GUILD_DECLINE)]
         [Parser(Opcode.CMSG_GUILD_INFO)]
         [Parser(Opcode.CMSG_GUILD_LEAVE)]
@@ -28,6 +28,12 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_GUILD_CANCEL)] // Fires GUILD_INVITE_CANCEL
         public static void HandleGuildEmpty(Packet packet)
         {
+        }
+
+        [Parser(Opcode.CMSG_GUILD_ACCEPT, ClientVersionBuild.V4_0_6_13596)]
+        public static void HandleGuildInviteAccept406(Packet packet)
+        {
+            packet.ReadGuid("Player GUID");
         }
 
         [Parser(Opcode.CMSG_GUILD_ROSTER, ClientVersionBuild.V4_0_6_13596, ClientVersionBuild.V4_2_2_14545)]
@@ -107,7 +113,13 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadCString("Guild MOTD");
             var size = packet.ReadUInt32("Members size");
-            packet.ReadBits("Unk bits", (int)size);
+
+            var chars = new char[size];
+            for (var i = 0; i < size; ++i)
+                chars[i] = packet.ReadBit() ? '1' : '0';
+            var bits = new string(chars);
+
+            packet.Store("Unk bits", bits);
 
             var membersList = packet.StoreBeginList("Members");
             for (var i = 0; i < size; ++i)
@@ -142,19 +154,19 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadGuid("Member GUID", i);
 
             for (var i = 0; i < size; ++i)
-                packet.ReadEnum<Class>("Member Class", TypeCode.Byte);
+                packet.ReadEnum<Class>("Member Class", TypeCode.Byte, i);
 
             for (var i = 0; i < size; ++i)
                 packet.ReadCString("Member Name", i);
 
             for (var i = 0; i < size; ++i)
-                packet.ReadUInt32("Unk", i);
+                packet.ReadInt32("Unk", i);
 
             for (var i = 0; i < size; ++i)
                 packet.ReadUInt32("Member Rank", i);
 
             for (var i = 0; i < size; ++i)
-                packet.ReadUInt32("Unk 2", i);
+                packet.ReadInt32("Unk 2", i);
 
             for (var i = 0; i < size; ++i)
                 packet.ReadByte("Member Level", i);
@@ -200,6 +212,15 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadGuid("Guild GUID");
             packet.ReadGuid("Player GUID");
+        }
+
+        [Parser(Opcode.SMSG_GUILD_UPDATE_PARTY_STATE)]
+        public static void HandleGuildUpdatePartyStateResponse(Packet packet)
+        {
+            packet.ReadByte("Unk byte");
+            packet.ReadUInt32("Unk UInt32 1");
+            packet.ReadUInt32("Unk UInt32 2");
+            packet.ReadUInt32("Unk UInt32 3");
         }
 
         [Parser(Opcode.CMSG_GUILD_QUERY)]
@@ -314,7 +335,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreEndList();
         }
 
-        [Parser(Opcode.SMSG_GUILD_RANK, ClientVersionBuild.V4_2_2_14545)]
+        [Parser(Opcode.SMSG_GUILD_RANK, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleGuildRankServer422(Packet packet)
         {
             const int guildBankMaxTabs = 8;
@@ -344,11 +365,39 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreEndList();
         }
 
+        [Parser(Opcode.SMSG_GUILD_RANK, ClientVersionBuild.V4_3_4_15595)]
+        public static void HandleGuildRankServer434(Packet packet)
+        {
+            const int guildBankMaxTabs = 8;
+            var count = packet.ReadBits("Count", 18);
+            var length = new int[count];
+            for (var i = 0; i < count; ++i)
+                length[i] = (int)packet.ReadBits(7);
+
+            packet.StoreBeginList("GuildRanks");
+            for (var i = 0; i < count; ++i)
+            {
+                packet.ReadInt32("Creation Order", i);
+                packet.StoreBeginList("Tabs");
+                for (var j = 0; j < guildBankMaxTabs; ++j)
+                {
+                    packet.ReadInt32("Tab Slots", i, j);
+                    packet.ReadEnum<GuildBankRightsFlag>("Tab Rights", TypeCode.Int32, i, j);
+                }
+                packet.StoreEndList();
+                packet.ReadInt32("Gold Per Day", i);
+                packet.ReadEnum<GuildRankRightsFlag>("Rights", TypeCode.Int32, i);
+                packet.ReadWoWString("Name", length[i], i);
+                packet.ReadInt32("Rights Order", i);
+            }
+            packet.StoreEndList();
+        }
+
         [Parser(Opcode.CMSG_GUILD_CREATE)]
         [Parser(Opcode.CMSG_GUILD_INVITE)]
         [Parser(Opcode.CMSG_GUILD_PROMOTE)]
         [Parser(Opcode.CMSG_GUILD_DEMOTE)]
-        [Parser(Opcode.CMSG_GUILD_REMOVE)]
+        [Parser(Opcode.CMSG_GUILD_REMOVE, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
         [Parser(Opcode.CMSG_GUILD_LEADER)]
         [Parser(Opcode.CMSG_GUILD_ADD_RANK, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
         public static void HandleGuildCreate(Packet packet)
@@ -407,12 +456,38 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadCString("MOTD");
         }
 
-        [Parser(Opcode.CMSG_GUILD_MOTD, ClientVersionBuild.V4_0_6_13596)]
+        [Parser(Opcode.CMSG_GUILD_MOTD, ClientVersionBuild.V4_0_6_13596, ClientVersionBuild.V4_3_4_15595)]
         public static void HandleGuildMOTD406(Packet packet)
         {
             packet.ReadGuid("Guild GUID");
             packet.ReadGuid("Player GUID");
             packet.ReadCString("MOTD");
+        }
+
+        [Parser(Opcode.CMSG_GUILD_MOTD, ClientVersionBuild.V4_3_4_15595)]
+        public static void HandleGuildMOTD434(Packet packet)
+        {
+            packet.ReadWoWString("MOTD", (int)packet.ReadBits(11));
+        }
+
+        [Parser(Opcode.CMSG_GUILD_INFO_TEXT, ClientVersionBuild.Zero, ClientVersionBuild.V4_0_6_13596)]
+        public static void HandleSetGuildInfo(Packet packet)
+        {
+            packet.ReadCString("Text");
+        }
+
+        [Parser(Opcode.CMSG_GUILD_INFO_TEXT, ClientVersionBuild.V4_0_6_13596, ClientVersionBuild.V4_3_4_15595)]
+        public static void HandleGuildInfo406(Packet packet)
+        {
+            packet.ReadGuid("Player GUID");
+            packet.ReadGuid("Guild GUID");
+            packet.ReadCString("Text");
+        }
+
+        [Parser(Opcode.CMSG_GUILD_INFO_TEXT, ClientVersionBuild.V4_3_4_15595)]
+        public static void HandleGuildInfo434(Packet packet)
+        {
+            packet.ReadWoWString("Text", (int)packet.ReadBits(12));
         }
 
         [Parser(Opcode.SMSG_GUILD_EVENT)]
@@ -477,17 +552,6 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadCString("Note");
         }
 
-        [Parser(Opcode.CMSG_GUILD_INFO_TEXT)]
-        public static void HandleGuildInfoText(Packet packet)
-        {
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
-            {
-                packet.ReadGuid("Player GUID");
-                packet.ReadGuid("Guild GUID");
-            }
-            packet.ReadCString("Text");
-        }
-
         [Parser(Opcode.CMSG_GUILD_BANKER_ACTIVATE)]
         public static void HandleGuildBankerActivate(Packet packet)
         {
@@ -499,7 +563,8 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleGuildBankQueryTab(Packet packet)
         {
             packet.ReadGuid("GUID");
-            if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_2_2_14545))
+            if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_2_2_14545)
+                || ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
                 packet.ReadByte("Tab Id");
             packet.ReadBoolean("Full Slot List"); // false = only slots updated in last operation are shown. True = all slots updated
         }
@@ -610,6 +675,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadCString("Tab Icon");
         }
 
+        [Parser(Opcode.CMSG_GUILD_RANKS)]
         [Parser(Opcode.CMSG_QUERY_GUILD_XP)]
         public static void HandleGuildRequestNews(Packet packet)
         {

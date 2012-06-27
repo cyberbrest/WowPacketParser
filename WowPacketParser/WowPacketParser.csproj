@@ -226,6 +226,7 @@
     <Compile Include="Enums\HighGuidType.cs" />
     <Compile Include="Enums\Holiday.cs" />
     <Compile Include="Enums\InhabitType.cs" />
+    <Compile Include="Enums\TargetIcon.cs" />
     <Compile Include="Enums\InstanceResetWarningType.cs" />
     <Compile Include="Enums\InstanceStatus.cs" />
     <Compile Include="Enums\InventoryResult.cs" />
@@ -367,7 +368,6 @@
     <Compile Include="Misc\Bit.cs" />
     <Compile Include="Misc\StoreEntry.cs" />
     <Compile Include="Misc\ClientVersion.cs" />
-    <Compile Include="Misc\ConcurrentMultiDictionary.cs" />
     <Compile Include="Misc\Extensions.cs" />
     <Compile Include="Misc\Filters.cs" />
     <Compile Include="Misc\Guid.cs" />
@@ -390,7 +390,6 @@
     <Compile Include="Processing\TextFileOutput.cs" />
     <Compile Include="Processing\RawFileWriters\IBinaryPacketWriter.cs" />
     <Compile Include="Processing\RawFileWriters\KSZorBinaryPacketWriter.cs" />
-    <Compile Include="Processing\RawFileWriters\SplitRawOutput.cs" />
     <Compile Include="Store\Objects\WorldObject.cs" />
     <Compile Include="Misc\Utilities.cs" />
     <Compile Include="Misc\Vector2.cs" />
@@ -470,6 +469,7 @@
     <Compile Include="Store\Objects\ObjectName.cs" />
     <Compile Include="Store\Objects\PageText.cs" />
     <Compile Include="Store\Objects\Player.cs" />
+    <Compile Include="Store\Objects\QuestMisc.cs" />
     <Compile Include="Store\Objects\QuestPOI.cs" />
     <Compile Include="Store\Objects\QuestPOIPoint.cs" />
     <Compile Include="Store\Objects\QuestTemplate.cs" />

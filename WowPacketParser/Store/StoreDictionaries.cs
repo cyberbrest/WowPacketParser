@@ -19,17 +19,23 @@ namespace WowPacketParser.Store
             {
                 case "Objects":
                     return flags.HasAnyFlag(SQLOutputFlags.CreatureSpawns) ||
-                           flags.HasAnyFlag(SQLOutputFlags.GameObjectSpawns);
+                           flags.HasAnyFlag(SQLOutputFlags.GameObjectSpawns) ||
+                           flags.HasAnyFlag(SQLOutputFlags.CreatureMovement) ||
+                           flags.HasAnyFlag(SQLOutputFlags.CreatureEquip);
                 case "GameObjectTemplates":
                     return flags.HasAnyFlag(SQLOutputFlags.GameObjectTemplate);
                 case "ItemTemplates":
                     return false; //return flags.HasAnyFlag(SQLOutputFlags.ItemTemplate;
                 case "QuestTemplates":
+                case "QuestOffers":
+                case "QuestRewards":
                     return flags.HasAnyFlag(SQLOutputFlags.QuestTemplate);
+                case "Gossips":
+                    return flags.HasAnyFlag(SQLOutputFlags.Gossip);
+                case "Loots":
+                    return flags.HasAnyFlag(SQLOutputFlags.Loot);
                 case "UnitTemplates":
                 case "SpellsX":
-                case "Gossips":
-                case "Loots":
                 case "CreatureTexts":
                 case "Emotes":
                 case "Sounds":
@@ -67,7 +73,7 @@ namespace WowPacketParser.Store
     public class StoreDictionary<T, TK> : Store, IEnumerable<KeyValuePair<T, Tuple<TK, TimeSpan?>>>
     {
         private readonly Dictionary<T, Tuple<TK, TimeSpan?>> _dictionary;
-        
+
         public StoreDictionary(string type)
         {
             Type = type;
@@ -117,7 +123,7 @@ namespace WowPacketParser.Store
                     return true;
                 }
             }
-            
+
             value = default(TK);
             return false;
         }
@@ -138,7 +144,7 @@ namespace WowPacketParser.Store
                     return _dictionary[key];
                 return null;
             }
-            
+
             set
             {
                 if (Enabled)
@@ -195,9 +201,6 @@ namespace WowPacketParser.Store
             if (!Enabled)
                 return;
 
-            if (_dictionary.ContainsKey(key))
-                return;
-
             _dictionary.Add(key, new Tuple<TK, TimeSpan?>(value, time));
         }
 
@@ -244,7 +247,7 @@ namespace WowPacketParser.Store
     public class StoreBag<T> : Store, IEnumerable<Tuple<T, TimeSpan?>>
     {
         private readonly Bag<Tuple<T, TimeSpan?>> _bag;
- 
+
         public StoreBag(string type)
         {
             Type = type;

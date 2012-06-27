@@ -38,7 +38,7 @@ namespace WowPacketParser.Parsing.Parsers
             gameObject.CastCaption = packet.ReadCString("Cast Caption");
             gameObject.UnkString = packet.ReadCString("Unk String");
 
-            gameObject.Data = new int[ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_0_14333) ? 32 : 24];
+            gameObject.Data = new int[ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6_13596) ? 32 : 24];
             packet.StoreBeginList("Data");
             for (var i = 0; i < gameObject.Data.Length; i++)
                 gameObject.Data[i] = packet.ReadInt32("Data", i);
@@ -54,7 +54,7 @@ namespace WowPacketParser.Parsing.Parsers
                     gameObject.QuestItems[i] = (uint)packet.ReadEntryWithName<Int32>(StoreNameType.Item, "Quest Item", i);
             packet.StoreEndList();
 
-            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_0_14333))
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6_13596))
                 gameObject.UnknownUInt = packet.ReadUInt32("Unknown UInt32");
 
             packet.AddSniffData(StoreNameType.GameObject, entry.Key, "QUERY_RESPONSE");

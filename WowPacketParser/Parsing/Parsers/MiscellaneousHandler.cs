@@ -8,6 +8,12 @@ namespace WowPacketParser.Parsing.Parsers
 {
     public static class MiscellaneousParsers
     {
+        [Parser(Opcode.CMSG_VIOLENCE_LEVEL)]
+        public static void HandleSetViolenceLevel(Packet packet)
+        {
+            packet.ReadByte("Level");
+        }
+
         [Parser(Opcode.SMSG_HOTFIX_NOTIFY)]
         public static void HandleHotfixNotify(Packet packet)
         {
@@ -19,9 +25,15 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_HOTFIX_INFO)]
         public static void HandleHotfixInfo(Packet packet)
         {
-            var count = packet.ReadInt32("Count");
+            var count = 0u;
+            
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))  // Might have been earlier
+                count = packet.ReadBits("Count", 22);
+            else
+                count = packet.ReadUInt32("Count");
+                
             packet.StoreBeginList("Hotfixes");
-            for (var i = 0; i < count; i++)
+            for (var i = 0u; i < count; i++)
             {
                 packet.ReadInt32("Hotfix type"); // Also time?
                 packet.ReadTime("Hotfix date");
@@ -226,7 +238,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_FEATURE_SYSTEM_STATUS)]
         public static void HandleFeatureSystemStatus(Packet packet)
         {
-            packet.ReadBoolean("Unk bool");
+            packet.ReadByte("Unk byte");
             packet.ReadBoolean("Enable Voice Chat");
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
@@ -241,15 +253,15 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_REALM_SPLIT)]
         public static void HandleClientRealmSplit(Packet packet)
         {
-            packet.ReadInt32("Unk Int32"); // Same as first int32 in SMSG_REALM_SPLIT
+            packet.ReadEnum<ClientSplitState>("Client State", TypeCode.Int32);
         }
 
         [Parser(Opcode.SMSG_REALM_SPLIT)]
         public static void HandleServerRealmSplit(Packet packet)
         {
-            packet.ReadInt32("Unk Int32");
-            packet.ReadEnum<RealmSplitState>("Split State", TypeCode.Int32);
-            packet.ReadCString("Unk String");
+            packet.ReadEnum<ClientSplitState>("Client State", TypeCode.Int32);
+            packet.ReadEnum<PendingSplitState>("Split State", TypeCode.Int32);
+            packet.ReadCString("Split Date");
         }
 
         [Parser(Opcode.CMSG_PING)]
@@ -411,8 +423,15 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Current Value");
             packet.ReadUInt32("Max Value");
             packet.ReadInt32("Regen");
-            packet.ReadByte("Unk Byte");
+            packet.ReadBoolean("Paused");
             packet.ReadUInt32("Spell Id");
+        }
+
+        [Parser(Opcode.SMSG_PAUSE_MIRROR_TIMER)]
+        public static void HandlePauseMirrorTimer(Packet packet)
+        {
+            packet.ReadEnum<MirrorTimerType>("Timer Type", TypeCode.UInt32);
+            packet.ReadBoolean("Paused");
         }
 
         [Parser(Opcode.SMSG_STOP_MIRROR_TIMER)]
@@ -472,7 +491,6 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadInt32("Unk int32 1");
             packet.ReadInt32("Unk int32 2");
-            packet.ReadInt32("Unk int32 3");
         }
 
         /*
@@ -506,7 +524,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadGuid("GUID");
             packet.ReadInt32("Unk int32 1");
             packet.ReadInt32("Unk int32 2");
-            packet.ReadInt32("Unk int32 3");
+            packet.ReadUInt32("Unk int32 3");
             packet.ReadInt32("Unk int32 4");
         }
 
@@ -706,7 +724,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_UI_TIME)]
         public static void HandleUITime(Packet packet)
         {
-            packet.ReadUInt32("Time");
+            packet.ReadTime("Time");
         }
 
         [Parser(Opcode.SMSG_MINIGAME_STATE)]
@@ -772,6 +790,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.CMSG_RETURN_TO_GRAVEYARD)]
         [Parser(Opcode.CMSG_BATTLEFIELD_REQUEST_SCORE_DATA)]
         [Parser(Opcode.CMSG_WORLD_PORT_RESPONSE)]
+        [Parser(Opcode.CMSG_UI_TIME_REQUEST)]
         public static void HandleZeroLengthPackets(Packet packet)
         {
         }

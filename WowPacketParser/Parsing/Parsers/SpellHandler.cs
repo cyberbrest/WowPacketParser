@@ -44,11 +44,31 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreEndList();
         }
 
+        [Parser(Opcode.SMSG_CONVERT_RUNE)]
+        public static void HandleConvertRune(Packet packet)
+        {
+            packet.ReadByte("Index");
+            packet.ReadByte("New Rune Type");
+        }
+
+        [Parser(Opcode.SMSG_ADD_RUNE_POWER)]
+        public static void HandleAddRunePower(Packet packet)
+        {
+            packet.ReadUInt32("Mask?"); // TC: 1 << index
+        }
+
         [Parser(Opcode.SMSG_COOLDOWN_EVENT)]
         public static void HandleCooldownEvent(Packet packet)
         {
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
             packet.ReadGuid("GUID");
+        }
+
+        [Parser(Opcode.SMSG_NOTIFY_DEST_LOC_SPELL_CAST)]
+        public static void HandleNotifyDestLocSpellCast(Packet packet)
+        {
+            packet.ReadCString("Unk CString");
+            // TODO: Verify and/or finish this
         }
 
         [Parser(Opcode.SMSG_SEND_UNLEARN_SPELLS)]
@@ -410,7 +430,12 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell ID");
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_0_10958))
-                packet.ReadInt16("Unk Int16");
+            {
+                if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
+                    packet.ReadInt32("Unk Int32");
+                else
+                    packet.ReadInt16("Unk Int16");
+            }
         }
 
         [Parser(Opcode.CMSG_UPDATE_PROJECTILE_POSITION)]
@@ -561,7 +586,9 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadGuid("Caster GUID");
             packet.ReadGuid("Target GUID");
             packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell ID");
-            if (packet.ReadBoolean("Debug output"))
+            packet.ReadBoolean("Unk bool");
+
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_3_11685) && ClientVersion.RemovedInVersion(ClientVersionBuild.V3_3_5_12213)) // blizzard retardness, client doesn't even read this
             {
                 packet.ReadSingle("Unk");
                 packet.ReadSingle("Unk");
@@ -726,12 +753,19 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreEndList();
         }
 
+        [Parser(Opcode.CMSG_TOTEM_DESTROYED)]
+        public static void HandleTotemDestroyed(Packet packet)
+        {
+            packet.ReadByte("Slot");
+        }
+
         [Parser(Opcode.SMSG_TOTEM_CREATED)]
         public static void HandleTotemCreated(Packet packet)
         {
-            packet.ReadByte("Unk Byte");
-            packet.ReadGuid("GUID1");
-            packet.ReadGuid("GUID2");
+            packet.ReadByte("Slot");
+            packet.ReadGuid("GUID");
+            packet.ReadUInt32("Duration");
+            packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell Id");
         }
 
         [Parser(Opcode.CMSG_CANCEL_CAST)]

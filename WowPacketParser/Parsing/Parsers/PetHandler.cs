@@ -12,6 +12,14 @@ namespace WowPacketParser.Parsing.Parsers
 {
     public static class PetHandler
     {
+        public static void ReadPetFlags(ref Packet packet)
+        {
+            var petModeFlag = packet.ReadUInt32();
+            packet.Store("React state", (ReactState)((petModeFlag >> 8) & 0xFF));
+            packet.Store("Command state", (CommandState)((petModeFlag >> 16) & 0xFF));
+            packet.Store("Flag", (PetModeFlags)(petModeFlag & 0xFFFF0000));
+        }
+
         [Parser(Opcode.SMSG_PET_SPELLS)]
         public static void HandlePetSpells(Packet packet)
         {
@@ -23,20 +31,17 @@ namespace WowPacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_1_0_9767))
                 packet.ReadEnum<CreatureFamily>("Pet Family", TypeCode.UInt16); // vehicles -> 0
 
-            packet.ReadUInt32("Unknown 1");
+            packet.ReadUInt32("Expiration Time");
+
+            ReadPetFlags(ref packet);
 
             var isPet = guid.GetHighType() == HighGuidType.Pet;
             var isVehicle = guid.GetHighType() == HighGuidType.Vehicle;
             var isMinion = guid.GetHighType() == HighGuidType.Unit;
-
-            // Following int8,int8,int16 is sent like int32
-            /*var reactState = */ packet.ReadByte("React state"); // 1
-            /*var commandState = */ packet.ReadByte("Command state"); // 1
-            packet.ReadUInt16("Unknown 2"); // pets -> 0, vehicles -> 0x800 (2048)
-
-            var spells = new List<uint>(10);
+            const int maxCreatureSpells = 10;
+            var spells = new List<uint>(maxCreatureSpells);
             packet.StoreBeginList("Spells/Actions");
-            for (var i = 0; i < 10; i++) // Read pet/vehicle spell ids
+            for (var i = 0; i < maxCreatureSpells; i++) // Read pet/vehicle spell ids
             {
                 var spell16 = packet.ReadUInt16();
                 var spell8 = packet.ReadByte();
@@ -66,7 +71,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreBeginList("Spells/auras?");
             for (var i = 0; i < spellCount; i++)
             {
-                packet.ReadEntryWithName<Int16>(StoreNameType.Spell, "Spell", i);
+                packet.ReadEntryWithName<UInt16>(StoreNameType.Spell, "Spell", i);
                 packet.ReadInt16("Active", i);
             }
             packet.StoreEndList();
@@ -76,9 +81,9 @@ namespace WowPacketParser.Parsing.Parsers
             for (var i = 0; i < cdCount; i++)
             {
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_1_0_9767))
-                    packet.ReadEntryWithName<Int32>(StoreNameType.Spell, "Spell", i);
+                    packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Spell", i);
                 else
-                    packet.ReadEntryWithName<Int16>(StoreNameType.Spell, "Spell", i);
+                    packet.ReadEntryWithName<UInt16>(StoreNameType.Spell, "Spell", i);
 
                 packet.ReadUInt16("Category", i);
                 packet.ReadUInt32("Cooldown", i);
@@ -137,7 +142,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandlePetMode(Packet packet)
         {
             packet.ReadGuid("Guid");
-            packet.ReadEnum<PetModeFlags>("Pet Mode Flags", TypeCode.UInt32);
+            ReadPetFlags(ref packet);
         }
 
         [Parser(Opcode.SMSG_PET_ACTION_SOUND)]

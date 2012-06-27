@@ -49,16 +49,20 @@ namespace WowPacketParser.Loading
             switch (_pktVersion)
             {
                 case PktVersion.V2_1:
-                    SetBuild(_reader.ReadUInt16());             // client build
-                    _reader.ReadBytes(40);                      // session key
+                {
+                    SetBuild(_reader.ReadUInt16()); // client build
+                    _reader.ReadBytes(40); // session key
                     break;
+                }
                 case PktVersion.V2_2:
+                {
                     _reader.ReadByte();                         // sniffer id
                     SetBuild(_reader.ReadUInt16());             // client build
                     _reader.ReadBytes(4);                       // client locale
                     _reader.ReadBytes(20);                      // packet key
                     _reader.ReadBytes(64);                      // realm name
                     break;
+                }
                 case PktVersion.V3_0:
                 {
                     var snifferId = _reader.ReadByte();         // sniffer id
@@ -79,6 +83,7 @@ namespace WowPacketParser.Loading
                     break;
                 }
                 case PktVersion.V3_1:
+                {
                     _reader.ReadByte();                         // sniffer id
                     SetBuild(_reader.ReadUInt32());             // client build
                     _reader.ReadBytes(4);                       // client locale
@@ -88,6 +93,7 @@ namespace WowPacketParser.Loading
                     additionalLength = _reader.ReadInt32();
                     _reader.ReadBytes(additionalLength);
                     break;
+                }
                 default:
                     throw new Exception("not a pkt file!");
             }
@@ -116,56 +122,63 @@ namespace WowPacketParser.Loading
             Direction direction;
             byte[] data;
 
+            switch (_pktVersion)
             {
-                switch (_pktVersion)
+                case PktVersion.V2_1:
+                case PktVersion.V2_2:
                 {
-                    case PktVersion.V2_1:
-                    case PktVersion.V2_2:
-                        direction = (_reader.ReadByte() == 0xff) ? Direction.ServerToClient : Direction.ClientToServer;
-                        time = Utilities.GetDateTimeFromUnixTime(_reader.ReadInt32());
-                        _reader.ReadInt32(); // tick count
-                        length = _reader.ReadInt32();
+                    direction = (_reader.ReadByte() == 0xff) ? Direction.ServerToClient : Direction.ClientToServer;
+                    time = Utilities.GetDateTimeFromUnixTime(_reader.ReadInt32());
+                    _reader.ReadInt32(); // tick count
+                    length = _reader.ReadInt32();
 
-                        if (direction == Direction.ServerToClient)
-                        {
-                            opcode = _reader.ReadInt16();
-                            data = _reader.ReadBytes(length - 2);
-                        }
-                        else
-                        {
-                            opcode = _reader.ReadInt32();
-                            data = _reader.ReadBytes(length - 4);
-                        }
-
-                        break;
-                    case PktVersion.V3_0:
-                    case PktVersion.V3_1:
-                        direction = (_reader.ReadUInt32() == 0x47534d53) ? Direction.ServerToClient : Direction.ClientToServer;
-
-                        if (_pktVersion == PktVersion.V3_0)
-                        {
-                            time = Utilities.GetDateTimeFromUnixTime(_reader.ReadInt32());
-                            var tickCount = _reader.ReadUInt32();
-                            if (_startTickCount != 0)
-                                time = _startTime.AddMilliseconds(tickCount - _startTickCount);
-                        }
-                        else
-                        {
-                            _reader.ReadUInt32(); // session id
-                            var tickCount = _reader.ReadUInt32();
-                            time = _startTime.AddMilliseconds(tickCount - _startTickCount);
-                        }
-
-                        int additionalSize = _reader.ReadInt32();
-                        length = _reader.ReadInt32();
-                        _reader.ReadBytes(additionalSize);
+                    if (direction == Direction.ServerToClient)
+                    {
+                        opcode = _reader.ReadInt16();
+                        data = _reader.ReadBytes(length - 2);
+                    }
+                    else
+                    {
                         opcode = _reader.ReadInt32();
                         data = _reader.ReadBytes(length - 4);
-                        break;
-                    default:
-                        throw new Exception("Incorrect pkt version");
+                    }
+
+                    break;
                 }
+                case PktVersion.V3_0:
+                case PktVersion.V3_1:
+                {
+                    direction = (_reader.ReadUInt32() == 0x47534d53) ? Direction.ServerToClient : Direction.ClientToServer;
+
+                    if (_pktVersion == PktVersion.V3_0)
+                    {
+                        time = Utilities.GetDateTimeFromUnixTime(_reader.ReadInt32());
+                        var tickCount = _reader.ReadUInt32();
+                        if (_startTickCount != 0)
+                            time = _startTime.AddMilliseconds(tickCount - _startTickCount);
+                    }
+                    else
+                    {
+                        _reader.ReadUInt32(); // session id
+                        var tickCount = _reader.ReadUInt32();
+                        time = _startTime.AddMilliseconds(tickCount - _startTickCount);
+                    }
+
+                    int additionalSize = _reader.ReadInt32();
+                    length = _reader.ReadInt32();
+                    _reader.ReadBytes(additionalSize);
+                    opcode = _reader.ReadInt32();
+                    data = _reader.ReadBytes(length - 4);
+                    break;
+                }
+                default:
+                    throw new Exception("Incorrect pkt version");
             }
+
+            // ignore opcodes that were not "decrypted" (usually because of
+            // a missing session key) (only applicable to 335 or earlier)
+            if (opcode >= 1312 && ClientVersion.Build <= ClientVersionBuild.V3_3_5a_12340)
+                return null;
 
             var packet = new Packet(data, opcode, time, direction, number, fileName);
             return packet;
@@ -173,11 +186,9 @@ namespace WowPacketParser.Loading
 
         public void Dispose()
         {
-            if (_reader != null)
-            {
-                _reader.BaseStream.Dispose();
-                _reader.Dispose();
-            }
+            if (_reader == null) return;
+            _reader.BaseStream.Dispose();
+            _reader.Dispose();
         }
     }
 }

@@ -174,12 +174,13 @@ namespace WowPacketParser.Parsing.Parsers
         {
             packet.ReadGuid("GUID");
             packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID");
-            packet.ReadUInt32("Slot");
+            if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_5a_12340))
+                packet.ReadUInt32("Slot");
             packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
             packet.ReadInt32("Random Suffix");
             packet.ReadInt32("Random Property Id");
             packet.ReadUInt32("Count");
-            packet.ReadUInt32("Count Down");
+            packet.ReadUInt32("Roll time");
             packet.ReadEnum<LootVoteFlags>("Roll Vote Mask", TypeCode.Byte);
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_0_14333))
                 packet.ReadByte("unk"); //amount of players? need verification.

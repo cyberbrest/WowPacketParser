@@ -13,9 +13,23 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID");
             packet.ReadVector3("Position");
             packet.ReadCString("Text");
-            packet.ReadUInt32("Unk UInt32 1");
-            packet.ReadBoolean("Need Response");
-            // FIXME: 3.3.3a has many more data here..
+            packet.ReadUInt32("Need Response");
+            packet.ReadBoolean("Need GM interaction");
+            var count = packet.ReadInt32("Count");
+
+            packet.StoreBeginList("Sent array");
+            for (int i = 0; i < count; i++)
+                packet.Store("Sent", (packet.Time - packet.ReadTime()).ToFormattedString());
+            packet.StoreEndList();
+
+            if (count == 0)
+                packet.ReadInt32("Unk Int32");
+            else
+            {
+                var decompCount = packet.ReadInt32();
+                packet.Inflate(decompCount);
+                packet.Store("Ticket",packet.ReadCString());
+            }
         }
 
         [Parser(Opcode.SMSG_GM_TICKET_STATUS_UPDATE)]
@@ -33,9 +47,9 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_GMRESPONSE_RECEIVED)]
         public static void HandleGMResponseReceived(Packet packet)
         {
-            packet.ReadUInt32("Unk 1");
-            packet.ReadUInt32("Unk 2");
-            packet.ReadCString("Text");
+            packet.ReadUInt32("Response ID");
+            packet.ReadUInt32("Ticket ID");
+            packet.ReadCString("Description");
             packet.StoreBeginList("Responses");
             for (var i = 1; i <= 4; i++)
                 packet.ReadCString("Response", i);
@@ -43,9 +57,25 @@ namespace WowPacketParser.Parsing.Parsers
         }
 
         [Parser(Opcode.SMSG_GMTICKET_GETTICKET)]
+        public static void HandleGetGMTicket(Packet packet)
+        {
+            var unk = packet.ReadInt32("Unk UInt32");
+            if (unk != 6)
+                return;
+
+            packet.ReadInt32("TicketID");
+            packet.ReadCString("Description");
+            packet.ReadByte("Category");
+            packet.ReadSingle("Ticket Age");
+            packet.ReadSingle("Oldest Ticket Time");
+            packet.ReadSingle("Update Time");
+            packet.ReadBoolean("Assigned to GM");
+            packet.ReadBoolean("Opened by GM");
+        }
+
         [Parser(Opcode.SMSG_GMTICKET_CREATE)]
         [Parser(Opcode.SMSG_GMTICKET_UPDATETEXT)]
-        public static void HandleGetTicket(Packet packet)
+        public static void HandleCreateUpdateGMTicket(Packet packet)
         {
             packet.ReadInt32("Unk UInt32");
         }
