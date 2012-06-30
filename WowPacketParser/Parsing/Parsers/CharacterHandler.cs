@@ -120,55 +120,58 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleCharEnum(Packet packet)
         {
             var count = packet.ReadByte("Count");
-
+            packet.StoreBeginList("Characters");
             for (var i = 0; i < count; i++)
             {
-                var guid = packet.ReadGuid("GUID");
-                var name = packet.ReadCString("Name");
+                var guid = packet.ReadGuid("GUID", i);
+                var name = packet.ReadCString("Name", i);
+                var race = packet.ReadEnum<Race>("Race", TypeCode.Byte, i);
                 StoreGetters.AddName(guid, name);
-                var race = packet.ReadEnum<Race>("Race", TypeCode.Byte);
-                var clss = packet.ReadEnum<Class>("Class", TypeCode.Byte);
-                packet.ReadEnum<Gender>("Gender", TypeCode.Byte);
+                var clss = packet.ReadEnum<Class>("Class", TypeCode.Byte, i);
+                packet.ReadEnum<Gender>("Gender", TypeCode.Byte, i);
 
-                packet.ReadByte("Skin");
-                packet.ReadByte("Face");
-                packet.ReadByte("Hair Style");
-                packet.ReadByte("Hair Color");
-                packet.ReadByte("Facial Hair");
+                packet.ReadByte("Skin", i);
+                packet.ReadByte("Face", i);
+                packet.ReadByte("Hair Style", i);
+                packet.ReadByte("Hair Color", i);
+                packet.ReadByte("Facial Hair", i);
 
-                var level = packet.ReadByte("Level");
-                var zone = packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id");
-                var mapId = packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map Id");
+                var level = packet.ReadByte("Level", i);
+                var zone = packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id", i);
+                var mapId = packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map Id", i);
 
-                var pos = packet.ReadVector3("Position");
+                var pos = packet.ReadVector3("Position", i);
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_3_13329))
-                    packet.ReadGuid("Guild GUID");
+                    packet.ReadGuid("Guild GUID", i);
                 else
-                    packet.ReadInt32("Guild Id");
-                packet.ReadEnum<CharacterFlag>("Character Flags", TypeCode.Int32);
+                    packet.ReadInt32("Guild Id", i);
 
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_0_2_9056))
-                    packet.ReadEnum<CustomizationFlag>("Customization Flags", TypeCode.Int32);
+                    packet.ReadEnum<CustomizationFlag>("Customization Flags", TypeCode.Int32, i);
 
-                var firstLogin = packet.ReadBoolean("First Login");
-                packet.ReadInt32("Pet Display Id");
-                packet.ReadInt32("Pet Level");
-                packet.ReadEnum<CreatureFamily>("Pet Family", TypeCode.Int32);
+                var firstLogin = packet.ReadBoolean("First Login", i);
+                packet.ReadInt32("Pet Display Id", i);
+                packet.ReadInt32("Pet Level", i);
+                packet.ReadEnum<CreatureFamily>("Pet Family", TypeCode.Int32, i);
 
+                packet.StoreBeginList("Equipment", i);
                 for (var j = 0; j < 19; j++)
                 {
-                    packet.ReadInt32("Equip Display Id");
-                    packet.ReadEnum<InventoryType>("Equip Inventory Type", TypeCode.Byte);
-                    packet.ReadInt32("Equip Aura Id");
+                    packet.ReadInt32("Equip Display Id", i, j);
+                    packet.ReadEnum<InventoryType>("Equip Inventory Type", TypeCode.Byte, i, j);
+                    packet.ReadInt32("Equip Aura Id", i, j);
                 }
+                packet.StoreEndList();
 
                 int bagCount = ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_3_11685) ? 4 : 1;
+                packet.StoreBeginList("Bags", i);
                 for (var j = 0; j < bagCount; j++)
                 {
-                    packet.ReadInt32("Bag Display Id");
-                    packet.ReadEnum<InventoryType>("Bag Inventory Type", TypeCode.Byte);
-                    packet.ReadInt32("Bag Aura Id");
+                    packet.ReadInt32("Bag Display Id", i, j);
+                    packet.ReadEnum<InventoryType>("Bag Inventory Type", TypeCode.Byte, i, j);
+                    packet.ReadInt32("Bag Aura Id", i, j);
                 }
+                packet.StoreEndList();
 
                 if (firstLogin)
                 {
@@ -184,6 +187,7 @@ namespace WowPacketParser.Parsing.Parsers
                     Storage.Objects.Add(guid, playerInfo, packet.TimeSpan);
                 StoreGetters.AddName(guid, name);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_CHAR_ENUM, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
@@ -199,6 +203,7 @@ namespace WowPacketParser.Parsing.Parsers
                 for (int j = 0; j < 17; j++)
                     bits[c, j] = packet.ReadBit();
 
+            packet.StoreBeginList("Characters");
             for (int c = 0; c < count; c++)
             {
                 var low = new byte[8];
@@ -277,29 +282,31 @@ namespace WowPacketParser.Parsing.Parsers
 
                 packet.ReadByte("List Order", c);
 
+                packet.StoreBeginList("Equipment", c);
                 for (int itm = 0; itm < 19; itm++)
                 {
                     packet.ReadInt32("Item EnchantID", c, itm);
                     packet.ReadEnum<InventoryType>("Item InventoryType", TypeCode.Byte, c, itm);
                     packet.ReadInt32("Item DisplayID", c, itm);
                 }
+                packet.StoreEndList();
 
+                packet.StoreBeginList("Bags", c);
                 for (int itm = 0; itm < 4; itm++)
                 {
                     packet.ReadInt32("Bag EnchantID", c, itm);
                     packet.ReadEnum<InventoryType>("Bag InventoryType", TypeCode.Byte, c, itm);
                     packet.ReadInt32("Bag DisplayID", c, itm);
                 }
+                packet.StoreEndList();
 
                 packet.ReadEnum<CustomizationFlag>("CustomizationFlag", TypeCode.UInt32, c);
 
                 if (bits[c, 4])
                     guild[1] = (byte)(packet.ReadByte() ^ 1);
 
-                var playerGuid = new Guid(BitConverter.ToUInt64(low, 0));
-
-                packet.WriteLine("[{0}] Character GUID: {1}", c, playerGuid);
-                packet.WriteLine("[{0}] Guild GUID: {1}", c, new Guid(BitConverter.ToUInt64(guild, 0)));
+                var playerGuid = packet.StoreBitstreamGuid("Character GUID", low, c);
+                packet.StoreBitstreamGuid("Guild GUID", guild, c);
 
                 var firstLogin = bits[c, 16];
                 if (firstLogin)
@@ -316,6 +323,7 @@ namespace WowPacketParser.Parsing.Parsers
                     Storage.Objects.Add(playerGuid, playerInfo, packet.TimeSpan);
                 StoreGetters.AddName(playerGuid, name);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_CHAR_ENUM, ClientVersionBuild.V4_3_0_15005, ClientVersionBuild.V4_3_3_15354)]
@@ -356,21 +364,26 @@ namespace WowPacketParser.Parsing.Parsers
             var unkCounter = packet.ReadBits("Unk Counter", 23);
             packet.ReadBit(); // no idea, not used in client
 
+            packet.StoreBeginList("Characters");
             for (int c = 0; c < count; ++c)
             {
+                packet.StoreBeginList("Equipment", c);
                 for (var itm = 0; itm < 19; ++itm)
                 {
                     packet.ReadEnum<InventoryType>("Item InventoryType", TypeCode.Byte, c, itm);
                     packet.ReadInt32("Item DisplayID", c, itm);
                     packet.ReadInt32("Item EnchantID", c, itm);
                 }
+                packet.StoreEndList();
 
+                packet.StoreBeginList("Bags", c);
                 for (var itm = 0; itm < 4; ++itm)
                 {
                     packet.ReadEnum<InventoryType>("Bag InventoryType", TypeCode.Byte, c, itm);
                     packet.ReadInt32("Bag DisplayID", c, itm);
                     packet.ReadInt32("Bag EnchantID", c, itm);
                 }
+                packet.StoreEndList();
 
                 if (guildGuids[c][0] != 0)
                     guildGuids[c][0] ^= packet.ReadByte();
@@ -435,10 +448,8 @@ namespace WowPacketParser.Parsing.Parsers
                 if (guildGuids[c][2] != 0)
                     guildGuids[c][2] ^= packet.ReadByte();
 
-                var playerGuid = new Guid(BitConverter.ToUInt64(charGuids[c], 0));
-
-                packet.WriteLine("[{0}] Character GUID: {1}", c, playerGuid);
-                packet.WriteLine("[{0}] Guild GUID: {1}", c, new Guid(BitConverter.ToUInt64(guildGuids[c], 0)));
+                var playerGuid = packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
+                packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 if (firstLogins[c])
                 {
@@ -455,8 +466,13 @@ namespace WowPacketParser.Parsing.Parsers
                 StoreGetters.AddName(playerGuid, name);
             }
 
+            packet.StoreBeginList("Unk Datas");
             for (var c = 0; c < unkCounter; c++)
-                packet.WriteLine("Unk Loop: {0}, {1}", packet.ReadUInt32(), packet.ReadByte());
+            {
+                packet.ReadUInt32("Unk UInt32", c);
+                packet.ReadByte("Unk Byte", c);
+            }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_CHAR_ENUM, ClientVersionBuild.V4_3_3_15354, ClientVersionBuild.V4_3_4_15595)]
@@ -506,21 +522,26 @@ namespace WowPacketParser.Parsing.Parsers
             // no idea, not used in client
             packet.ReadByte();
 
+            packet.StoreBeginList("Characters");
             for (int c = 0; c < count; ++c)
             {
+                packet.StoreBeginList("Equipment", c);
                 for (var itm = 0; itm < 19; ++itm)
                 {
                     packet.ReadInt32("Item EnchantID", c, itm);
                     packet.ReadInt32("Item DisplayID", c, itm);
                     packet.ReadEnum<InventoryType>("Item InventoryType", TypeCode.Byte, c, itm);
                 }
+                packet.StoreEndList();
 
+                packet.StoreBeginList("Bags", c);
                 for (var itm = 0; itm < 4; ++itm)
                 {
                     packet.ReadInt32("Bag EnchantID", c, itm);
                     packet.ReadInt32("Bag DisplayID", c, itm);
                     packet.ReadEnum<InventoryType>("Bag InventoryType", TypeCode.Byte, c, itm);
                 }
+                packet.StoreEndList();
 
                 var zone = packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id", c);
                 packet.ReadInt32("Pet Level", c);
@@ -596,10 +617,9 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadByte("Face", c);
                 var mapId = packet.ReadInt32("Map", c);
                 var name = packet.ReadWoWString("Name", (int)nameLenghts[c], c);
-                var playerGuid = new Guid(BitConverter.ToUInt64(charGuids[c], 0));
 
-                packet.WriteLine("[{0}] Character GUID: {1}", c, playerGuid);
-                packet.WriteLine("[{0}] Guild GUID: {1}", c, new Guid(BitConverter.ToUInt64(guildGuids[c], 0)));
+                var playerGuid = packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
+                packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 if (firstLogins[c])
                 {
@@ -619,8 +639,13 @@ namespace WowPacketParser.Parsing.Parsers
                 StoreGetters.AddName(playerGuid, name);
             }
 
+            packet.StoreBeginList("Unk Datas");
             for (var c = 0; c < unkCounter; c++)
-                packet.WriteLine("Unk Loop: {0}, {1}", packet.ReadUInt32(), packet.ReadByte());
+            {
+                packet.ReadUInt32("Unk UInt32", c);
+                packet.ReadByte("Unk Byte", c);
+            }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_CHAR_ENUM, ClientVersionBuild.V4_3_4_15595)]
@@ -659,23 +684,28 @@ namespace WowPacketParser.Parsing.Parsers
                 guildGuids[c][7] = (byte)(packet.ReadBit() ? 1 : 0);
             }
 
+            packet.StoreBeginList("Characters");
             for (int c = 0; c < count; ++c)
             {
                 var clss = packet.ReadEnum<Class>("Class", TypeCode.Byte, c);
-
+                    
+                packet.StoreBeginList("Equipment", c);
                 for (var itm = 0; itm < 19; ++itm)
                 {
                     packet.ReadEnum<InventoryType>("Item InventoryType", TypeCode.Byte, c, itm);
                     packet.ReadInt32("Item DisplayID", c, itm);
                     packet.ReadInt32("Item EnchantID", c, itm);
                 }
+                packet.StoreEndList();
 
+                packet.StoreBeginList("Bags", c);
                 for (var itm = 0; itm < 4; ++itm)
                 {
                     packet.ReadEnum<InventoryType>("Bag InventoryType", TypeCode.Byte, c, itm);
                     packet.ReadInt32("Bag DisplayID", c, itm);
                     packet.ReadInt32("Bag EnchantID", c, itm);
                 }
+                packet.StoreEndList();
 
                 packet.ReadInt32("Pet Family", c);
 
@@ -733,10 +763,8 @@ namespace WowPacketParser.Parsing.Parsers
                     charGuids[c][1] ^= packet.ReadByte();
                 var zone = packet.ReadEntryWithName<UInt32>(StoreNameType.Zone, "Zone Id", c);
 
-                var playerGuid = new Guid(BitConverter.ToUInt64(charGuids[c], 0));
-
-                packet.WriteLine("[{0}] Character GUID: {1}", c, playerGuid);
-                packet.WriteLine("[{0}] Guild GUID: {1}", c, new Guid(BitConverter.ToUInt64(guildGuids[c], 0)));
+                    var playerGuid = packet.StoreBitstreamGuid("Character GUID", charGuids[c], c);
+                    packet.StoreBitstreamGuid("Guild GUID", guildGuids[c], c);
 
                 if (firstLogins[c])
                 {
@@ -754,22 +782,23 @@ namespace WowPacketParser.Parsing.Parsers
                 else
                     Storage.Objects.Add(playerGuid, playerInfo, packet.TimeSpan);
                 StoreGetters.AddName(playerGuid, name);
+                packet.StoreEndList();
             }
         }
 
         [Parser(Opcode.SMSG_COMPRESSED_CHAR_ENUM)]
         public static void HandleCompressedCharEnum(Packet packet)
         {
-            using (var packet2 = packet.Inflate(packet.ReadInt32()))
+            packet.Inflate(packet.ReadInt32());
             {
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_4_15595))
-                    HandleCharEnum434(packet2);
+                    HandleCharEnum434(packet);
                 else if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_3_15354))
-                    HandleCharEnum433(packet2);
+                    HandleCharEnum433(packet);
                 else if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_3_0_15005))
-                    HandleCharEnum430(packet2);
+                    HandleCharEnum430(packet);
                 else
-                    HandleCharEnum422(packet2);
+                    HandleCharEnum422(packet);
             }
         }
 
@@ -835,23 +864,22 @@ namespace WowPacketParser.Parsing.Parsers
                     bits[i, j] = packet.ReadBit();
             }
 
+            packet.StoreBeginList("Currencies");
             for (var i = 0; i < count; ++i)
             {
-                var total = packet.ReadInt32();
-                string extra = "";
+                packet.ReadInt32("TotalCount", i);
                 if (bits[i, 0])
-                    extra = String.Format(" - Weekly Count: {0,4}", packet.ReadInt32());
+                    packet.ReadInt32("Weekly Count", i);
 
                 if (bits[i, 5])
-                    extra += String.Format(" - Weekly Cap: {0,4}", packet.ReadInt32());
+                    packet.ReadInt32("Weekly Cap", i);
 
                 if (bits[i, 6])
-                    extra += String.Format(" - Season Total Earned?: {0,4}", packet.ReadInt32());
+                    packet.ReadInt32("Season Total Earned?", i);
 
-
-                var id = packet.ReadInt32();
-                packet.WriteLine("[{0,2}] Currency Id: {1,3} - Count: {2,4}{3}", i, id, total, extra);
+                packet.ReadInt32("Currency Id", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_INIT_CURRENCY, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_4_15595)]
@@ -864,6 +892,7 @@ namespace WowPacketParser.Parsing.Parsers
                 for (var j = 0; j < 3; ++j)
                     bits[i, j] = packet.ReadBit();
 
+            packet.StoreBeginList("CurrencyDatas");
             for (var i = 0; i < count; ++i)
             {
                 packet.ReadInt32("Currency Id", i);
@@ -879,12 +908,14 @@ namespace WowPacketParser.Parsing.Parsers
                 if (bits[i, 2])
                     packet.ReadUInt32("Week Count", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_INIT_CURRENCY, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleInitCurrency(Packet packet)
         {
             var count = packet.ReadUInt32("Count");
+            packet.StoreBeginList("CurrencyDatas");
             for (var i = 0; i < count; ++i)
             {
                 packet.ReadUInt32("Week Count", i);
@@ -894,6 +925,7 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadUInt32("Week Cap", i);
                 packet.ReadInt32("Total Count", i);
             }
+            packet.StoreEndList();
         }
     }
 }

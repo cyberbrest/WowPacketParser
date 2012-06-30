@@ -17,16 +17,18 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadBoolean("Need GM interaction");
             var count = packet.ReadInt32("Count");
 
+            packet.StoreBeginList("Sent array");
             for (int i = 0; i < count; i++)
-                packet.WriteLine("[" + i + "] Sent: " + (packet.Time - packet.ReadTime()).ToFormattedString());
+                packet.Store("Sent", (packet.Time - packet.ReadTime()).ToFormattedString());
+            packet.StoreEndList();
 
             if (count == 0)
                 packet.ReadInt32("Unk Int32");
             else
             {
                 var decompCount = packet.ReadInt32();
-                packet = packet.Inflate(decompCount);
-                packet.WriteLine(packet.ReadCString());
+                packet.Inflate(decompCount);
+                packet.Store("Ticket",packet.ReadCString());
             }
         }
 
@@ -48,8 +50,10 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Response ID");
             packet.ReadUInt32("Ticket ID");
             packet.ReadCString("Description");
+            packet.StoreBeginList("Responses");
             for (var i = 1; i <= 4; i++)
                 packet.ReadCString("Response", i);
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_GMTICKET_GETTICKET)]

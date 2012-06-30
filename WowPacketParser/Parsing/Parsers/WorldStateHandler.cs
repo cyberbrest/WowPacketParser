@@ -16,15 +16,18 @@ namespace WowPacketParser.Parsing.Parsers
             CurrentAreaId = packet.ReadEntryWithName<Int32>(StoreNameType.Area, "Area Id");
 
             var numFields = packet.ReadInt16("Field Count");
+            packet.StoreBeginList("WorldStateFields");
             for (var i = 0; i < numFields; i++)
-                ReadWorldStateBlock(ref packet);
+                ReadWorldStateBlock(ref packet, i);
+            packet.StoreEndList();
         }
 
-        public static void ReadWorldStateBlock(ref Packet packet)
+        public static void ReadWorldStateBlock(ref Packet packet, params int[] values)
         {
-            var field = packet.ReadInt32();
-            var val = packet.ReadInt32();
-            packet.WriteLine("Field: {0} - Value: {1}", field, val);
+            packet.StoreBeginObj("WorldStateBlock", values);
+            packet.ReadInt32("Field");
+            packet.ReadInt32("Value");
+            packet.StoreEndObj();
         }
 
         [Parser(Opcode.SMSG_UPDATE_WORLD_STATE)]

@@ -18,9 +18,7 @@ namespace WowPacketParser.Tests.Misc
             var bytes = new byte[] {0xB, 0xA, 0xD, 0xC, 0x0, 0xD, 0xE, 66, 65, 68, 67, 79, 68, 69, 0, 0, 0x42};
 
             var packet = new Packet(bytes, 1, new DateTime(2012, 1, 1), Direction.ClientToServer, 1, "Test");
-            packet.AsHex();
-
-            var actual = packet.Writer.ToString();
+            var actual = packet.ToHex();
 
             var expected =
             "|-------------------------------------------------|---------------------------------|" + Environment.NewLine +

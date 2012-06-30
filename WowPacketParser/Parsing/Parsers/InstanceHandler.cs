@@ -96,11 +96,13 @@ namespace WowPacketParser.Parsing.Parsers
             if (!test)
                 packet.ReadGuid("Owner GUID");
 
+            packet.StoreBeginList("Targets");
             for (int i = 0; packet.CanRead(); ++i)
             {
                 packet.ReadEnum<TargetIcon>("Icon Id", TypeCode.Byte, i);
                 packet.ReadGuid("Target Guid", i);
             }
+            packet.StoreEndList();
         }
 
         [Parser(Opcode.SMSG_RAID_INSTANCE_MESSAGE)]
@@ -151,6 +153,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandleRaidInstanceInfo(Packet packet)
         {
             var counter = packet.ReadInt32("Counter");
+            packet.StoreBeginList("RaidInstances");
             for (var i = 0; i < counter; ++i)
             {
                 packet.ReadEntryWithName<Int32>(StoreNameType.Map, "Map ID", i);
@@ -165,6 +168,7 @@ namespace WowPacketParser.Parsing.Parsers
                 if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_6a_13623))
                     packet.ReadUInt32("Unk2", i);
             }
+            packet.StoreEndList();
         }
     }
 }
