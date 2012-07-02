@@ -57,6 +57,19 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Mask?"); // TC: 1 << index
         }
 
+        [Parser(Opcode.SMSG_CONVERT_RUNE)]
+        public static void HandleConvertRune(Packet packet)
+        {
+            packet.ReadByte("Index");
+            packet.ReadByte("New Rune Type");
+        }
+
+        [Parser(Opcode.SMSG_ADD_RUNE_POWER)]
+        public static void HandleAddRunePower(Packet packet)
+        {
+            packet.ReadUInt32("Mask?"); // TC: 1 << index
+        }
+
         [Parser(Opcode.SMSG_COOLDOWN_EVENT)]
         public static void HandleCooldownEvent(Packet packet)
         {
@@ -751,6 +764,12 @@ namespace WowPacketParser.Parsing.Parsers
             for (var i = 0; packet.CanRead(); i++)
                 packet.ReadEntryWithName<UInt32>(StoreNameType.Spell, "Dispelled Spell ID", i);
             packet.StoreEndList();
+        }
+
+        [Parser(Opcode.CMSG_TOTEM_DESTROYED)]
+        public static void HandleTotemDestroyed(Packet packet)
+        {
+            packet.ReadByte("Slot");
         }
 
         [Parser(Opcode.CMSG_TOTEM_DESTROYED)]
