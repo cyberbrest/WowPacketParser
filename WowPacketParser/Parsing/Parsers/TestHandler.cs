@@ -1,7 +1,8 @@
-using WowPacketParser.Enums;
-using WowPacketParser.Misc;
+using PacketParser.Enums;
+using PacketParser.DataStructures;
+using PacketParser.Misc;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class TestHandler
     {
@@ -49,7 +50,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             for (var i = 0; i < count; i++)
             {
-                var count2 = packet.ReadInt32("UnkCount2");
+                var count2 = packet.ReadInt32("UnkCount2", i);
 
                 packet.StoreBeginList("UnknownList2", i);
                 for (var j = 0; j < count2; j++)
@@ -96,7 +97,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.StoreBeginList("UnkList");
             for (var i = 0; i < 5; i++)
             {
-                packet.StoreBeginList("UnkList");
+                packet.StoreBeginList("UnkList", i);
                 for (var j = 0; j < 4; j++)
                     packet.ReadInt32("Unk", i, j);
                 packet.StoreEndList();

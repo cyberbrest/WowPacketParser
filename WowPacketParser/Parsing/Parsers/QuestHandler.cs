@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
-using WowPacketParser.Enums;
-using WowPacketParser.Enums.Version;
-using WowPacketParser.Misc;
-using WowPacketParser.Store;
-using WowPacketParser.Store.Objects;
+using PacketParser.Enums;
+using PacketParser.Enums.Version;
+using PacketParser.Misc;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class QuestHandler
     {
@@ -68,11 +67,11 @@ namespace WowPacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
             {
                 packet.ReadUInt32("Title Id");
-                packet.ReadUInt32("Unknown UInt32");
-                packet.ReadSingle("Unknown float");
-                packet.ReadUInt32("Bonus Talents");
-                packet.ReadUInt32("Unknown UInt32");
-                packet.ReadUInt32("Unknown UInt32");
+                packet.ReadUInt32("Unknown UInt32 1");
+                packet.ReadSingle("Unknown float 2");
+                packet.ReadUInt32("Bonus Talents 3");
+                packet.ReadUInt32("Unknown UInt32 4");
+                packet.ReadUInt32("Unknown UInt32 5");
             }
             else
             {
@@ -124,8 +123,8 @@ namespace WowPacketParser.Parsing.Parsers
                     packet.ReadUInt32("Currency Count", i);
                 packet.StoreEndList();
 
-                packet.ReadUInt32("Unknown UInt32");
-                packet.ReadUInt32("Unknown UInt32");
+                packet.ReadUInt32("Unknown UInt32 6");
+                packet.ReadUInt32("Unknown UInt32 7");
             }
         }
 
@@ -360,7 +359,7 @@ namespace WowPacketParser.Parsing.Parsers
                 quest.SoundTurnIn = packet.ReadUInt32("Sound TurnIn");
             }
 
-            Storage.QuestTemplates.Add((uint) id.Key, quest, packet.TimeSpan);
+            packet.Store("QuestTemplateObject", quest);
         }
 
         [Parser(Opcode.CMSG_QUEST_POI_QUERY)]
@@ -456,7 +455,7 @@ namespace WowPacketParser.Parsing.Parsers
                     }
                     packet.StoreEndList();
 
-                    Storage.QuestPOIs.Add(new Tuple<uint, uint>((uint) questId, (uint) idx), questPoi, packet.TimeSpan);
+                    packet.Store("QuestPOIObject", questPoi, i, j);
                 }
                 packet.StoreEndList();
             }
@@ -662,8 +661,6 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Emote");
             packet.ReadUInt32("Close Window on Cancel");
 
-            Storage.QuestRewards.Add((uint) entry, new QuestReward {RequestItemsText = text}, null);
-
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_3_3_11685))
                 packet.ReadEnum<QuestFlags>("Quest Flags", TypeCode.UInt32);
 
@@ -700,8 +697,6 @@ namespace WowPacketParser.Parsing.Parsers
             var entry = packet.ReadEntryWithName<UInt32>(StoreNameType.Quest, "Quest ID");
             packet.ReadCString("Title");
             var text = packet.ReadCString("Text");
-
-            Storage.QuestOffers.Add((uint) entry, new QuestOffer {OfferRewardText = text}, null);
 
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_1_13164))
             {

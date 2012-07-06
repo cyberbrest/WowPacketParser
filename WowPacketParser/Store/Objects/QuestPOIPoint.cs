@@ -1,6 +1,8 @@
-﻿namespace WowPacketParser.Store.Objects
+﻿using PacketParser.Misc;
+
+namespace PacketParser.DataStructures
 {
-    public class QuestPOIPoint
+    public class QuestPOIPoint : ITextOutputDisabled
     {
         public int Index; // Client expects a certain order although this is not on sniffs
 

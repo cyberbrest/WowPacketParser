@@ -1,9 +1,10 @@
 using System;
-using WowPacketParser.Enums;
-using WowPacketParser.Misc;
-using Guid=WowPacketParser.Misc.Guid;
+using PacketParser.Enums;
+using PacketParser.Misc;
+using Guid=PacketParser.DataStructures.Guid;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class MailHandler
     {
@@ -115,12 +116,14 @@ namespace WowPacketParser.Parsing.Parsers
                         enchantmentCount = 7;
                     if (ClientVersion.AddedInVersion(ClientType.Cataclysm))
                         enchantmentCount = 9;
+                    packet.StoreBeginList("Item Enchantments", i, j);
                     for (var k = 0; k < enchantmentCount; ++k)
                     {
                         packet.ReadUInt32("Item Enchantment Id", i, j, k);
                         packet.ReadUInt32("Item Enchantment Duration", i, j, k);
                         packet.ReadUInt32("Item Enchantment Charges", i, j, k);
                     }
+                    packet.StoreEndList();
 
                     packet.ReadInt32("Item Random Property Id", i, j);
                     packet.ReadUInt32("Item Suffix Factor", i, j);

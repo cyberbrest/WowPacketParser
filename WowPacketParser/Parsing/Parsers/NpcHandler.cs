@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
-using WowPacketParser.Enums;
-using WowPacketParser.Enums.Version;
-using WowPacketParser.Misc;
-using WowPacketParser.Store;
-using WowPacketParser.Store.Objects;
-using Guid = WowPacketParser.Misc.Guid;
+using PacketParser.Enums;
+using PacketParser.Enums.Version;
+using PacketParser.Misc;
+using PacketParser.Processing;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class NpcHandler
     {
@@ -116,7 +114,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             npcTrainer.Title = packet.ReadCString("Title");
 
-            Storage.NpcTrainers.Add(guid.GetEntry(), npcTrainer, packet.TimeSpan);
+            packet.Store("NpcTrainerObject", npcTrainer);
         }
 
         [Parser(Opcode.SMSG_LIST_INVENTORY, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
@@ -149,7 +147,7 @@ namespace WowPacketParser.Parsing.Parsers
             }
             packet.StoreEndList();
 
-            Storage.NpcVendors.Add(guid.GetEntry(), npcVendor, packet.TimeSpan);
+            packet.Store("NpcVendorObject", npcVendor);
         }
 
         [Parser(Opcode.SMSG_LIST_INVENTORY, ClientVersionBuild.V4_2_2_14545)]
@@ -206,7 +204,7 @@ namespace WowPacketParser.Parsing.Parsers
             }
             packet.StoreEndList();
 
-            Storage.NpcVendors.Add(guid.GetEntry(), npcVendor, packet.TimeSpan);
+            packet.Store("NpcVendorObject", npcVendor);
         }
 
         [Parser(Opcode.CMSG_GOSSIP_HELLO)]
@@ -248,8 +246,11 @@ namespace WowPacketParser.Parsing.Parsers
             var textId = packet.ReadUInt32("Text Id");
 
             if (guid.GetObjectType() == ObjectType.Unit)
-                if (Storage.Objects.ContainsKey(guid))
-                        ((Unit) Storage.Objects[guid].Item1).GossipId = menuId;
+            {
+                Object obj = PacketFileProcessor.Current.GetProcessor<ObjectStore>().GetObjectIfFound(guid);
+                if (obj != null)
+                    ((Unit)obj).GossipId = menuId;
+            }
 
             var count = packet.ReadUInt32("Amount of Options");
 
@@ -270,7 +271,8 @@ namespace WowPacketParser.Parsing.Parsers
                 gossip.GossipOptions.Add(gossipOption);
             }
             packet.StoreEndList();
-            Storage.Gossips.Add(Tuple.Create(menuId, textId), gossip, packet.TimeSpan);
+
+            packet.Store("GossipObject", gossip);
 
             var questgossips = packet.ReadUInt32("Amount of Quest gossips");
             packet.StoreBeginList("Quest Gossips");

@@ -1,19 +1,14 @@
 using System;
 using System.Text;
-using WowPacketParser.Enums;
-using WowPacketParser.Misc;
-using WowPacketParser.Store.Objects;
-using Guid=WowPacketParser.Misc.Guid;
+using PacketParser.Enums;
+using PacketParser.Misc;
+using PacketParser.Processing;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class SessionHandler
     {
-        [ThreadStatic]
-        public static Guid LoginGuid;
-
-        public static Player LoggedInCharacter;
-
         [Parser(Opcode.SMSG_AUTH_CHALLENGE, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]
         public static void HandleServerAuthChallenge(Packet packet)
         {
@@ -270,9 +265,9 @@ namespace WowPacketParser.Parsing.Parsers
 
             // Unknown, these two show the same as expansion payed for.
             // Eg. If account only has payed for Wotlk expansion it will show 2 for both.
-            packet.ReadEnum<ClientType>("Account Expansion", TypeCode.Byte);
+            packet.ReadEnum<ClientType>("Account Expansion1", TypeCode.Byte);
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_0_3_13329))
-                packet.ReadEnum<ClientType>("Account Expansion", TypeCode.Byte);
+                packet.ReadEnum<ClientType>("Account Expansion2", TypeCode.Byte);
         }
 
         public static void ReadQueuePositionInfo(ref Packet packet)
@@ -285,7 +280,7 @@ namespace WowPacketParser.Parsing.Parsers
         public static void HandlePlayerLogin(Packet packet)
         {
             var guid = packet.ReadGuid("GUID");
-            LoginGuid = guid;
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = guid;
         }
 
         [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
@@ -305,7 +300,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (bits[7]) bytes[6] = (byte)(packet.ReadByte() ^ 1);
             if (bits[3]) bytes[1] = (byte)(packet.ReadByte() ^ 1);
 
-            LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
         }
 
         [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V4_3_0_15005, ClientVersionBuild.V4_3_3_15354)]
@@ -325,7 +320,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (bits[2]) bytes[3] = (byte)(packet.ReadByte() ^ 1);
             if (bits[0]) bytes[0] = (byte)(packet.ReadByte() ^ 1);
 
-            LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
         }
 
         [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V4_3_3_15354, ClientVersionBuild.V4_3_4_15595)]
@@ -345,7 +340,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (bits[4]) bytes[0] = (byte)(packet.ReadByte() ^ 1);
             if (bits[3]) bytes[5] = (byte)(packet.ReadByte() ^ 1);
 
-            LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
         }
 
         [Parser(Opcode.CMSG_PLAYER_LOGIN, ClientVersionBuild.V4_3_4_15595)]
@@ -365,7 +360,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (bits[6]) bytes[1] = (byte)(packet.ReadByte() ^ 1);
             if (bits[4]) bytes[4] = (byte)(packet.ReadByte() ^ 1);
 
-            LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = packet.StoreBitstreamGuid("GUID", bytes);
         }
 
         [Parser(Opcode.SMSG_CHARACTER_LOGIN_FAILED)]
@@ -388,7 +383,7 @@ namespace WowPacketParser.Parsing.Parsers
         [Parser(Opcode.SMSG_LOGOUT_COMPLETE)]
         public static void HandleLogoutComplete(Packet packet)
         {
-            LoggedInCharacter = null;
+            PacketFileProcessor.Current.GetProcessor<SessionStore>().LoginGuid = null;
         }
 
         [Parser(Opcode.SMSG_REDIRECT_CLIENT, ClientVersionBuild.Zero, ClientVersionBuild.V4_2_2_14545)]

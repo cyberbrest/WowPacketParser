@@ -1,10 +1,10 @@
 using System;
-using WowPacketParser.Enums;
-using WowPacketParser.Misc;
-using WowPacketParser.Store;
-using WowPacketParser.Store.Objects;
+using PacketParser.Enums;
+using PacketParser.Misc;
+using PacketParser.Processing;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class ItemHandler
     {
@@ -29,12 +29,7 @@ namespace WowPacketParser.Parsing.Parsers
             var name = packet.ReadCString("Name");
             packet.ReadEnum<InventoryType>("Inventory Type", TypeCode.UInt32);
 
-            var objectName = new ObjectName
-            {
-                ObjectType = ObjectType.Item,
-                Name = name,
-            };
-            Storage.ObjectNames.Add((uint)entry, objectName, packet.TimeSpan);
+            PacketFileProcessor.Current.GetProcessor<NameStore>().AddName(StoreNameType.Item, entry, name, packet.TimeSpan);
         }
 
         [Parser(Opcode.CMSG_SOCKET_GEMS)]
@@ -521,7 +516,7 @@ namespace WowPacketParser.Parsing.Parsers
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V3_1_0_9767))
                 item.HolidayId = packet.ReadEnum<Holiday>("Holiday", TypeCode.Int32);
 
-            Storage.ItemTemplates.Add((uint) entry.Key, item, packet.TimeSpan);
+            packet.Store("ItemTemplateObject", item);
         }
 
         [Parser(Opcode.CMSG_REQUEST_HOTFIX, ClientVersionBuild.V4_2_2_14545, ClientVersionBuild.V4_3_0_15005)]
@@ -565,7 +560,7 @@ namespace WowPacketParser.Parsing.Parsers
             packet.ReadUInt32("Type");
             var itemId = packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
             if (ClientVersion.AddedInVersion(ClientVersionBuild.V4_2_2_14545))
-                packet.ReadUInt32("Received Type");
+                packet.ReadUInt32("Received Type2");
             var size = packet.ReadUInt32("Size");
             if (size == 0)
             {
@@ -573,7 +568,7 @@ namespace WowPacketParser.Parsing.Parsers
                 return;
             }
 
-            packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry");
+            packet.ReadEntryWithName<UInt32>(StoreNameType.Item, "Entry2");
             if (size == 32)
             {
                 packet.ReadEnum<ItemClass>("Class", TypeCode.Int32);
@@ -694,7 +689,7 @@ namespace WowPacketParser.Parsing.Parsers
             }
 
             if (ClientVersion.RemovedInVersion(ClientVersionBuild.V4_2_2_14545))
-                packet.ReadUInt32("Received Type");
+                packet.ReadUInt32("Received Type3");
         }
 
         [Parser(Opcode.SMSG_UPDATE_ITEM_ENCHANTMENTS)]

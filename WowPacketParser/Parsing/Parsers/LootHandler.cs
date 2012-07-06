@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using WowPacketParser.Enums;
-using WowPacketParser.Enums.Version;
-using WowPacketParser.Misc;
-using WowPacketParser.Store;
-using WowPacketParser.Store.Objects;
+using PacketParser.Enums;
+using PacketParser.Misc;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class LootHandler
     {
@@ -118,20 +116,7 @@ namespace WowPacketParser.Parsing.Parsers
             }
             packet.StoreEndList();
 
-            // Items do not have item id in its guid, we need to query the wowobject store go
-            if (guid.GetObjectType() == ObjectType.Item)
-            {
-                WoWObject item;
-                UpdateField itemEntry;
-                if (Storage.Objects.TryGetValue(guid, out item))
-                    if (item.UpdateFields.TryGetValue((int)UpdateFields.GetUpdateFieldOffset(ObjectField.OBJECT_FIELD_ENTRY), out itemEntry))
-                    {
-                        Storage.Loots.Add(new Tuple<uint, ObjectType>(itemEntry.UInt32Value, guid.GetObjectType()), loot, packet.TimeSpan);
-                        return;
-                    }
-            }
-
-            Storage.Loots.Add(new Tuple<uint, ObjectType>(guid.GetEntry(), guid.GetObjectType()), loot, packet.TimeSpan);
+            packet.Store("LootObject", loot);
         }
 
         [Parser(Opcode.CMSG_LOOT_ROLL)]

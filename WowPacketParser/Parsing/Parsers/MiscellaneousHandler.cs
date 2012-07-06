@@ -1,10 +1,11 @@
 using System;
-using WowPacketParser.Enums;
-using WowPacketParser.Enums.Version;
-using WowPacketParser.Misc;
-using WowPacketParser.Store;
+using PacketParser.Enums;
+using PacketParser.Enums.Version;
+using PacketParser.Misc;
+using PacketParser.Processing;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class MiscellaneousParsers
     {
@@ -33,11 +34,11 @@ namespace WowPacketParser.Parsing.Parsers
                 count = packet.ReadUInt32("Count");
                 
             packet.StoreBeginList("Hotfixes");
-            for (var i = 0u; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
-                packet.ReadInt32("Hotfix type"); // Also time?
-                packet.ReadTime("Hotfix date");
-                packet.ReadInt32("Hotfixed entry");
+                packet.ReadInt32("Hotfix type", i); // Also time?
+                packet.ReadTime("Hotfix date", i);
+                packet.ReadInt32("Hotfixed entry", i);
             }
             packet.StoreEndList();
         }
@@ -322,8 +323,6 @@ namespace WowPacketParser.Parsing.Parsers
 
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_PLAY_OBJECT_SOUND))
                 packet.ReadGuid("GUID 2");
-
-            Storage.Sounds.Add(sound, packet.TimeSpan);
         }
 
         [Parser(Opcode.SMSG_WEATHER)]
@@ -349,16 +348,17 @@ namespace WowPacketParser.Parsing.Parsers
             // TODO: Exclude happiness on Cata
             packet.StoreBeginList("Powers");
             for (var i = 0; i < powerCount; i++)
-                packet.ReadInt32("Power " + (PowerType)i);
+                packet.ReadInt32("Power " + (PowerType)i, i);
             packet.StoreEndList();
 
             packet.StoreBeginList("Stats");
             for (var i = 0; i < 5; i++)
-                packet.ReadInt32("Stat " + (StatType)i);
+                packet.ReadInt32("Stat " + (StatType)i, i);
             packet.StoreEndList();
 
-            if (SessionHandler.LoggedInCharacter != null)
-                SessionHandler.LoggedInCharacter.Level = level;
+            Player character = PacketFileProcessor.Current.GetProcessor<SessionStore>().LoggedInCharacter;
+            if (character != null)
+                character.Level = level;
         }
 
         [Parser(Opcode.CMSG_TUTORIAL_FLAG)]

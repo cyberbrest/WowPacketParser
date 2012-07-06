@@ -1,8 +1,8 @@
-﻿using WowPacketParser.Enums;
-
-namespace WowPacketParser.Store.Objects
+﻿using PacketParser.Enums;
+using PacketParser.Misc;
+namespace PacketParser.DataStructures
 {
-    public class NpcText
+    public class NpcText : ITextOutputDisabled
     {
         public float[] Probabilities;
 

@@ -1,9 +1,10 @@
 using System;
-using WowPacketParser.Misc;
-using WowPacketParser.Enums;
-using WowPacketParser.Enums.Version;
+using PacketParser.Misc;
+using PacketParser.Enums;
+using PacketParser.Enums.Version;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class TalentHandler
     {
@@ -85,7 +86,7 @@ namespace WowPacketParser.Parsing.Parsers
                 ++slot;
                 slotMask >>= 1;
             }
-
+            packet.StoreEndList();
             if (packet.Opcode == Opcodes.GetOpcode(Opcode.SMSG_INSPECT_TALENT))
             {
                 packet.ReadGuid("Guild GUID");
@@ -93,7 +94,6 @@ namespace WowPacketParser.Parsing.Parsers
                 packet.ReadUInt64("Guild Xp");
                 packet.ReadUInt32("Guild Members");
             }
-            packet.StoreEndList();
         }
 
         [Parser(Opcode.MSG_TALENT_WIPE_CONFIRM)]

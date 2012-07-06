@@ -1,9 +1,10 @@
 using System;
-using WowPacketParser.Enums;
-using WowPacketParser.Misc;
-using Guid = WowPacketParser.Misc.Guid;
+using PacketParser.Enums;
+using PacketParser.Misc;
+using PacketParser.Processing;
+using PacketParser.DataStructures;
 
-namespace WowPacketParser.Parsing.Parsers
+namespace PacketParser.Parsing.Parsers
 {
     public static class GuildHandler
     {
@@ -86,13 +87,14 @@ namespace WowPacketParser.Parsing.Parsers
             }
             packet.StoreEndList();
 
+            var names = PacketFileProcessor.Current.GetProcessor<NameStore>();
             packet.StoreBeginList("Members");
             for (var i = 0; i < size; i++)
             {
                 var guid = packet.ReadGuid("GUID", i);
                 var online = packet.ReadBoolean("Online", i);
                 var name = packet.ReadCString("Name", i);
-                StoreGetters.AddName(guid, name);
+                names.AddPlayerName(guid, name);
                 packet.ReadUInt32("Rank Id", i);
                 packet.ReadByte("Level", i);
                 packet.ReadByte("Class", i);
@@ -173,7 +175,7 @@ namespace WowPacketParser.Parsing.Parsers
 
             for (var i = 0; i < size; ++i)
             {
-                packet.StoreBeginList("Professions");
+                packet.StoreBeginList("Professions", i);
                 for (var j = 0; j < 2; ++j)
                 {
                     packet.ReadUInt32("Value", i, j);
@@ -378,7 +380,7 @@ namespace WowPacketParser.Parsing.Parsers
             for (var i = 0; i < count; ++i)
             {
                 packet.ReadInt32("Creation Order", i);
-                packet.StoreBeginList("Tabs");
+                packet.StoreBeginList("Tabs", i);
                 for (var j = 0; j < guildBankMaxTabs; ++j)
                 {
                     packet.ReadInt32("Tab Slots", i, j);
