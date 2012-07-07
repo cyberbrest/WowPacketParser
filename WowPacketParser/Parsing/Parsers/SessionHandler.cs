@@ -240,17 +240,14 @@ namespace PacketParser.Parsing.Parsers
             sha[14] = packet.ReadByte();
             sha[13] = packet.ReadByte();
 
-            using (var addons = new Packet(packet.ReadBytes(packet.ReadInt32()), packet.Opcode, packet.Time, packet.Direction, packet.Number, packet.Writer, packet.FileName))
-            {
-                var pkt2 = addons;
-                AddonHandler.ReadClientAddonsList(ref pkt2);
-            }
+            AddonHandler.ReadClientAddonsList(packet, packet.ReadInt32());
 
             var highBits = packet.ReadByte() << 5;
             var lowBits = packet.ReadByte() >> 3;
             var size = lowBits | highBits;
-            packet.WriteLine("Account name: {0}", Encoding.UTF8.GetString(packet.ReadBytes(size)));
-            packet.WriteLine("Proof SHA-1 Hash: " + Utilities.ByteArrayToHexString(sha));
+            packet.Store("Size", size);
+            packet.Store("Account name", Encoding.UTF8.GetString(packet.ReadBytes(size)));
+            packet.Store("Proof SHA-1 Hash", Utilities.ByteArrayToHexString(sha));
         }
 
         [Parser(Opcode.SMSG_AUTH_RESPONSE, ClientVersionBuild.Zero, ClientVersionBuild.V4_3_4_15595)]
