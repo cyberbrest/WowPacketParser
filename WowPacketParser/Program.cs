@@ -63,7 +63,6 @@ namespace WowPacketParser
 
             SQLConnector.Disconnect();
             SSHTunnel.Disconnect();
-            Logger.WriteErrors();
 
             EndPrompt();
         }
